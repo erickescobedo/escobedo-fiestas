@@ -298,3 +298,4 @@ body.inv .bg-doodles>svg{opacity:.9}
 /* Más fondo visible entre tarjetas para que se vean los dibujos del fondo */
 body.inv main.wrap,body.inv #card{gap:64px!important}
 body.inv{padding-top:calc(64px + env(safe-area-inset-top,0px));padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))}
+.fill-layer>svg,.bg-doodles>svg{position:absolute}

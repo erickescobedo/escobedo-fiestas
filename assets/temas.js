@@ -137,21 +137,30 @@
      Con o.centro, basta que el centro quede fuera de `obs` (en la página, los dibujos se asoman por debajo de las tarjetas). */
   function empacar(layer, box, obs, o){
     var W = box.width, H = box.height; if (!W || !H) { layer.innerHTML = ""; return; }
-    var S = o.size, IN = o.inset, seed = o.seed, slot = o.slot, out = "", hechos = [];
+    var S = o.size, IN = o.inset, seed = o.seed, slot = o.slot, sep2 = o.sep * o.sep, cel = o.sep, grid = {};
+    var BANDA = 700, bandas = [];   // Safari no dibuja filtros sobre áreas muy grandes: se arma en franjas
     function rnd(){ seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
     function choca(b){ for (var i = 0; i < obs.length; i++) { var q = obs[i]; if (b[0] < q[2] && b[2] > q[0] && b[1] < q[3] && b[3] > q[1]) return true; } return false; }
-    var intentos = Math.round(W * H / (S * S) * 12);
+    function cerca(cx, cy){
+      var gx = Math.floor(cx / cel), gy = Math.floor(cy / cel);
+      for (var i = gx - 1; i <= gx + 1; i++) for (var j = gy - 1; j <= gy + 1; j++) {
+        var c = grid[i + ',' + j]; if (!c) continue;
+        for (var k = 0; k < c.length; k++) { var dx = c[k][0] - cx, dy = c[k][1] - cy; if (dx * dx + dy * dy < sep2) return true; }
+      }
+      return false;
+    }
+    var intentos = Math.min(60000, Math.round(W * H / (S * S) * 12));
     for (var n = 0; n < intentos; n++) {
       var x = IN + rnd() * (W - 2 * IN - S), y = IN + rnd() * (H - 2 * IN - S), cx = x + S / 2, cy = y + S / 2;
-      if (x < IN - 0.1 || y < IN - 0.1) continue;
       var b = o.centro ? [cx - 2, cy - 2, cx + 2, cy + 2] : [x, y, x + S, y + S];
-      if (choca(b)) continue;
-      var cerca = false;
-      for (var k = 0; k < hechos.length; k++) { var dx = hechos[k][0] - cx, dy = hechos[k][1] - cy; if (dx * dx + dy * dy < o.sep * o.sep) { cerca = true; break; } }
-      if (cerca) continue;
-      hechos.push([cx, cy]); out += uso(slot++, Math.round(x), Math.round(y), S);
+      if (choca(b) || cerca(cx, cy)) continue;
+      var key = Math.floor(cx / cel) + ',' + Math.floor(cy / cel); (grid[key] = grid[key] || []).push([cx, cy]);
+      var bi = Math.floor(y / BANDA); bandas[bi] = (bandas[bi] || "") + uso(slot++, Math.round(x), Math.round(y - bi * BANDA), S);
     }
-    layer.innerHTML = '<svg width="' + Math.ceil(W) + '" height="' + Math.ceil(H) + '" style="display:block;overflow:visible"><g filter="url(#crayon)">' + out + '</g></svg>';
+    var html = "";
+    for (var i = 0; i < bandas.length; i++) if (bandas[i])
+      html += '<svg width="' + Math.ceil(W) + '" height="' + BANDA + '" style="position:absolute;left:0;top:' + (i * BANDA) + 'px;overflow:visible"><g filter="url(#crayon)">' + bandas[i] + '</g></svg>';
+    layer.innerHTML = html;
   }
   function rects(scope, base, sel, pad, obs){
     scope.querySelectorAll(sel).forEach(function(e){
