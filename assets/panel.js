@@ -184,16 +184,37 @@
       else pill = '<span class="pill env">' + (m.estado === 'enviado' ? 'Invitación enviada' : 'Enviando…') + '</span>';
       if (!r) btn = '<button class="btn ' + (m && m.estado !== 'error' ? 'btn-ghost' : 'btn-wa') + ' btn-sm" type="button" data-send="' + esc(g.id) + '">' + (m && m.estado !== 'error' ? 'Reenviar' : 'Enviar invitación') + '</button>';
       var err = m && m.estado === 'error' ? '<div style="flex-basis:100%;color:var(--err);font-size:.85rem;font-weight:700">WhatsApp no lo entregó: ' + esc(m.error) + '. Puedes mandarlo desde tu celular con "Abrir en mi WhatsApp".</div>' : '';
+      if (g.id === editId) return '<div class="guest editing"><div class="mini" style="flex:1 1 100%;margin:0"><input type="text" id="e-nombre" maxlength="80" value="' + esc(g.nombre) + '" aria-label="Nombre de la familia">' +
+        '<input type="tel" id="e-tel" value="' + esc(I.fmtTel(g.telefono)) + '" aria-label="Celular a 10 dígitos"></div><div class="acts">' +
+        '<button class="btn btn-blue btn-sm" type="button" data-gsave="' + esc(g.id) + '" style="background:var(--violet)">Guardar</button><button class="x" type="button" data-gcancel="1">Cancelar</button></div>' +
+        (m ? '<div style="flex-basis:100%;color:var(--muted);font-size:.85rem">Ya se le envió la invitación. Si cambias el número, toca Reenviar para que le llegue al nuevo.</div>' : '') + '</div>';
       return '<div class="guest"><div class="who"><b>' + esc(g.nombre) + '</b><span class="tel">' + esc(I.fmtTel(g.telefono)) + '</span></div><div class="acts">' + pill + btn +
         '<a class="x" href="https://wa.me/' + esc(g.telefono) + '?text=' + encodeURIComponent(manualText(g)) + '" target="_blank" rel="noopener">Abrir en mi WhatsApp</a>' +
-        '<button class="x" type="button" data-copy="' + esc(g.id) + '">Copiar link</button><button class="x" type="button" data-gdel="' + esc(g.id) + '">Quitar</button></div>' + err + '</div>';
+        '<button class="x" type="button" data-copy="' + esc(g.id) + '">Copiar link</button><button class="x" type="button" data-gedit="' + esc(g.id) + '">Editar</button><button class="x" type="button" data-gdel="' + esc(g.id) + '">Quitar</button></div>' + err + '</div>';
     }).join('') + '</div>';
   }
   function sendInvite(id){
     return sb.rpc('fiesta_enviar_invitacion', { p_invitado: id }).then(chk);
   }
   function afterSend(){ loadLists(); setTimeout(function(){ sb.rpc('fiesta_revisar_mensajes').then(loadLists); }, 4000); setTimeout(function(){ sb.rpc('fiesta_revisar_mensajes').then(loadLists); }, 12000); }
+  var editId = null;
   $('glist').addEventListener('click', function(e){
+    var ed = e.target.closest('[data-gedit]');
+    if (ed) { editId = ed.dataset.gedit; renderGuests(); var n = $('e-nombre'); if (n) { n.focus(); n.select(); } return; }
+    if (e.target.closest('[data-gcancel]')) { editId = null; renderGuests(); return; }
+    var sv = e.target.closest('[data-gsave]');
+    if (sv) {
+      var id = sv.dataset.gsave, st = $('g-st'), nombre = $('e-nombre').value.trim(), tel = I.waNum($('e-tel').value);
+      if (!nombre) { setStatus(st, "Escribe el nombre.", true); $('e-nombre').focus(); return; }
+      if (!tel) { setStatus(st, "El celular debe tener 10 dígitos.", true); $('e-tel').focus(); return; }
+      if (guests.some(function(g){ return g.id !== id && g.telefono === tel; })) { setStatus(st, "Ese número ya lo tiene otra familia en esta fiesta.", true); return; }
+      sv.disabled = true;
+      sb.from('fiesta_invitados').update({ nombre: nombre, telefono: tel }).eq('id', id).then(chk)
+        .then(function(){ return sb.from('fiesta_rsvps').update({ nombre: nombre, telefono: tel }).eq('invitado_id', id).then(chk); })
+        .then(function(){ editId = null; setStatus(st, "Guardado: " + nombre + "."); loadLists(); })
+        .catch(function(){ sv.disabled = false; setStatus(st, "No se pudo guardar. Intenta de nuevo.", true); });
+      return;
+    }
     var s = e.target.closest('[data-send]');
     if (s) { s.disabled = true; s.textContent = "Enviando…"; sendInvite(s.dataset.send).then(function(){ setStatus($('g-st'), "Invitación enviada a WhatsApp. En unos segundos se confirma la entrega."); afterSend(); })
       .catch(function(err){ s.disabled = false; s.textContent = "Enviar invitación"; setStatus($('g-st'), "No se pudo enviar: " + (err && err.message || "error") + ".", true); }); return; }
@@ -202,6 +223,10 @@
       navigator.clipboard.writeText(txt).then(function(){ c.textContent = "Copiado"; }, function(){ setStatus($('g-st'), txt); }).then(function(){ setTimeout(function(){ c.textContent = "Copiar link"; }, 2000); }); return; }
     var d = e.target.closest('[data-gdel]');
     if (d) twoStep(d, function(){ sb.from('fiesta_invitados').delete().eq('id', d.dataset.gdel).then(chk).then(loadLists).catch(function(){ setStatus($('g-st'), "No se pudo quitar.", true); }); });
+  });
+  $('glist').addEventListener('keydown', function(e){
+    if (e.key === 'Enter' && e.target.closest('.guest.editing')) { e.preventDefault(); var b = document.querySelector('[data-gsave]'); if (b) b.click(); }
+    if (e.key === 'Escape' && editId) { editId = null; renderGuests(); }
   });
   $('enviar-todos').addEventListener('click', function(e){
     var b = e.currentTarget;
