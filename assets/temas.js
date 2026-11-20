@@ -36,8 +36,12 @@
     '<section class="card hero" aria-labelledby="inv-nombre">' +
       '<div class="strip top">' + top + '</div>' +
       '<p class="kicker" data-v="kicker"></p>' +
-      '<h1 id="inv-nombre" data-v="nombre"></h1>' +
-      '<p class="age">cumple <b data-v="edad"></b> <span data-v="anos"></span></p>' +
+      '<div class="name-row">' +
+        '<div class="dcol side">' + dd(18) + dd(19, 1) + dd(20) + '</div>' +
+        '<div class="name-mid"><h1 id="inv-nombre" data-v="nombre"></h1>' +
+        '<p class="age">cumple <b data-v="edad"></b> <span data-v="anos"></span></p></div>' +
+        '<div class="dcol side">' + dd(21) + dd(22, 1) + dd(23) + '</div>' +
+      '</div>' +
       '<div class="photo-row" data-v="photorow">' +
         '<div class="dcol">' + dd(6) + dd(7,1) + dd(8) + '</div>' +
         '<div class="frame" data-v="frame"><div class="photo"><img data-v="foto" alt=""></div>' +
