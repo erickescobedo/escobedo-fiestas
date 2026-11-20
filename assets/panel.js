@@ -264,10 +264,20 @@
   });
 
   /* ---------- regalos ---------- */
-  function fillGiftText(){ if (!cfg) return; $('r-texto').value = cfg.regalos_texto || ""; $('r-ropa').value = cfg.talla_ropa || ""; $('r-zapato').value = cfg.talla_zapato || ""; $('r-envio').value = cfg.envio || ""; $('r-mtallas').checked = cfg.mostrar_tallas !== false; }
+  function fillGiftText(){ if (!cfg) return; $('r-texto').value = cfg.regalos_texto || ""; $('r-ropa').value = cfg.talla_ropa || ""; $('r-zapato').value = cfg.talla_zapato || ""; $('r-envio').value = cfg.envio || ""; $('r-mtallas').checked = cfg.mostrar_tallas !== false;
+    $('r-tcorreo').value = cfg.tarjetas_correo || ""; var T = cfg.tarjetas || [];
+    for (var k = 1; k <= 3; k++) { var t = T[k - 1] || {}; $('r-t' + k + 'n').value = t.nombre || ""; $('r-t' + k + 'l').value = t.link || ""; $('r-t' + k + 'x').value = t.nota || ""; } }
   $('r-guardar').addEventListener('click', function(){
     var st = $('r-st'); if (!partyId) { setStatus(st, "Primero crea la fiesta.", true); return; }
-    var v = { regalos_texto: $('r-texto').value.trim(), talla_ropa: $('r-ropa').value.trim(), talla_zapato: $('r-zapato').value.trim(), envio: $('r-envio').value.trim(), mostrar_tallas: $('r-mtallas').checked };
+    var v = { regalos_texto: $('r-texto').value.trim(), talla_ropa: $('r-ropa').value.trim(), talla_zapato: $('r-zapato').value.trim(), envio: $('r-envio').value.trim(), mostrar_tallas: $('r-mtallas').checked, tarjetas_correo: $('r-tcorreo').value.trim(), tarjetas: [] };
+    for (var k = 1; k <= 3; k++) {
+      var tn = $('r-t' + k + 'n').value.trim(), tl = $('r-t' + k + 'l').value.trim();
+      if (!tn && !tl) continue;
+      if (tl && !/^https:\/\//i.test(tl)) tl = /^[\w-]+(\.[\w-]+)+(\/|$)/.test(tl) ? "https://" + tl : "";
+      if (!tn || !tl) { setStatus($('r-st'), "Cada tarjeta de regalo necesita tienda y link (https://…).", true); return; }
+      v.tarjetas.push({ nombre: tn, link: tl, nota: $('r-t' + k + 'x').value.trim() });
+    }
+    if (v.tarjetas_correo && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v.tarjetas_correo)) { setStatus($('r-st'), "Revisa el correo para tarjetas de regalo.", true); return; }
     setStatus(st, "Guardando…");
     sb.from('fiestas').update(v).eq('id', partyId).then(chk).then(function(){ cfg = Object.assign({}, cfg, v); setStatus(st, "Guardado. Los invitados ya lo ven."); })
       .catch(function(){ setStatus(st, "No se pudo guardar. Intenta de nuevo.", true); });

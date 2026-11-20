@@ -42,7 +42,8 @@
   }
   function renderRegalos(){
     var tx = (cfg.regalos_texto || "").trim(), tr = (cfg.talla_ropa || "").trim(), tz = (cfg.talla_zapato || "").trim();
-    var hay = tx || tr || tz || regalos.length;
+    var tarj = (cfg.tarjetas || []).filter(function(t){ return t && t.nombre && safeLink(t.link); }), tcorreo = (cfg.tarjetas_correo || "").trim();
+    var hay = tx || tr || tz || regalos.length || (tcorreo && tarj.length);
     $('regalos').hidden = !hay; $('rg-strip').hidden = !hay; $('g-regalos').hidden = !hay;
     if (!hay) return;
     $('rg-texto').hidden = !tx; $('rg-texto').textContent = tx;
@@ -50,6 +51,12 @@
     $('rg-tallas').innerHTML = (tr ? '<div class="talla"><span class="lbl">Talla de ropa</span><span class="val">' + I.esc(tr) + '</span></div>' : '') +
       (tz ? '<div class="talla"><span class="lbl">Talla de zapato</span><span class="val">' + I.esc(tz) + '</span></div>' : '');
     var puede = !!familia, env = puede ? (cfg.envio || "").trim() : "";
+    $('rg-tarj').hidden = !(tcorreo && tarj.length);
+    if (tcorreo && tarj.length) {
+      $('rg-tarj-correo').textContent = tcorreo;
+      $('rg-tarj-links').innerHTML = tarj.map(function(t){ return '<a class="btn btn-blue btn-sm" href="' + I.esc(safeLink(t.link)) + '" target="_blank" rel="noopener noreferrer">Tarjeta ' + I.esc(t.nombre) + '</a>'; }).join('') +
+        tarj.filter(function(t){ return t.nota; }).map(function(t){ return '<p class="note" style="text-align:left;margin:2px 0 0;flex-basis:100%">' + I.esc(t.nombre) + ': ' + I.esc(t.nota) + '</p>'; }).join('');
+    }
     $('rg-envio').hidden = !env; $('rg-envio-txt').textContent = env;
     $('rg-nota').hidden = !(puede && regalos.length);
     $('rg-list').innerHTML = regalos.map(function(g){
@@ -75,6 +82,12 @@
     });
   });
 
+  $('rg-tarj-copiar').addEventListener('click', function(){
+    var b = this, txt = (cfg && cfg.tarjetas_correo || "").trim(); if (!txt) return;
+    function ok(){ b.textContent = "¡Copiado!"; setTimeout(function(){ b.textContent = "Copiar correo"; }, 2000); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, function(){ b.textContent = "Mantén presionado el correo para copiarlo"; });
+    else b.textContent = "Mantén presionado el correo para copiarlo";
+  });
   $('rg-copiar').addEventListener('click', function(){
     var b = this, txt = (cfg && cfg.envio || "").trim(); if (!txt) return;
     function ok(){ b.textContent = "¡Copiada!"; setTimeout(function(){ b.textContent = "Copiar dirección"; }, 2000); }

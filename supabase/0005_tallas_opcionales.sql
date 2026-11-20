@@ -1,4 +1,4 @@
--- Tallas opcionales: se guardan siempre, pero solo se muestran si "mostrar_tallas" está prendido.
+-- Tallas opcionales: se guardan siempre, pero solo se muestran si "mostrar_tallas" está prendido. OJO: 0007 reemplaza fiesta_publica; córrelo después.
 alter table panel.fiestas add column if not exists mostrar_tallas boolean not null default true;
 
 -- Datos de la fiesta actual. La dirección de envío solo va a familias con su link (código válido).

@@ -15,7 +15,7 @@
 <meta name="theme-color" content="#F4F1FA">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Gochi+Hand&family=Pacifico&family=Shantell+Sans:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
-<link rel="stylesheet" href="../assets/estilos.css?v=202611211230">
+<link rel="stylesheet" href="../assets/estilos.css?v=202611211300">
 <style>body{--bg:#F4F1FA;background-image:none}.check{display:flex;gap:10px;align-items:center;font-weight:700}.check input{width:22px;height:22px}</style>
 </head>
 <body>
@@ -116,6 +116,17 @@
         <label class="full check" style="font-size:.95rem"><input type="checkbox" id="r-mtallas">Mostrar tallas de ropa y zapato en la invitación</label>
         <label>Talla de ropa<input type="text" id="r-ropa" maxlength="40" placeholder="Ej. 2T / 24 meses"></label>
         <label>Talla de zapato<input type="text" id="r-zapato" maxlength="40" placeholder="Ej. 13 mx"></label>
+        <label class="full">Correo para tarjetas de regalo <span class="opt">(solo lo ven las familias con su link; vacío = no se muestra el apartado)</span><input type="email" id="r-tcorreo" maxlength="120" placeholder="correo@ejemplo.com" autocomplete="off"></label>
+        <span class="full legend" style="margin-top:4px">Tiendas de tarjetas de regalo</span>
+        <input type="text" id="r-t1n" maxlength="30" placeholder="Tienda (ej. Zara)" autocomplete="off">
+        <input type="text" id="r-t1l" inputmode="url" placeholder="Link para comprar la tarjeta (https://…)" autocomplete="off">
+        <input class="full" type="text" id="r-t1x" maxlength="120" placeholder="Nota (opcional)" autocomplete="off">
+        <input type="text" id="r-t2n" maxlength="30" placeholder="Tienda (ej. Zara)" autocomplete="off">
+        <input type="text" id="r-t2l" inputmode="url" placeholder="Link para comprar la tarjeta (https://…)" autocomplete="off">
+        <input class="full" type="text" id="r-t2x" maxlength="120" placeholder="Nota (opcional)" autocomplete="off">
+        <input type="text" id="r-t3n" maxlength="30" placeholder="Tienda (ej. Zara)" autocomplete="off">
+        <input type="text" id="r-t3l" inputmode="url" placeholder="Link para comprar la tarjeta (https://…)" autocomplete="off">
+        <input class="full" type="text" id="r-t3x" maxlength="120" placeholder="Nota (opcional)" autocomplete="off">
         <label class="full">Dirección para envíos <span class="opt">(solo la ven las familias con su link; déjala vacía para no mostrarla)</span><textarea id="r-envio" maxlength="400" rows="4" placeholder="Nombre&#10;Calle y número, colonia&#10;Ciudad, estado, C.P.&#10;Tel."></textarea></label>
       </div>
       <div class="btnrow"><button class="btn btn-blue btn-sm" type="button" id="r-guardar" style="background:var(--violet)">Guardar</button></div>
@@ -193,8 +204,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="../assets/config.js?v=202611211230"></script>
-<script src="../assets/temas.js?v=202611211230"></script>
-<script src="../assets/panel.js?v=202611211230"></script>
+<script src="../assets/config.js?v=202611211300"></script>
+<script src="../assets/temas.js?v=202611211300"></script>
+<script src="../assets/panel.js?v=202611211300"></script>
 </body>
 </html>
