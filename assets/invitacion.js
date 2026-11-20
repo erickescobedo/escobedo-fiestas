@@ -36,6 +36,7 @@
   function tienda(u){
     var h = ""; try { h = new URL(u).hostname.toLowerCase(); } catch (e) {}
     var T = { amazon: "Amazon", amzn: "Amazon", liverpool: "Liverpool", mercadolibre: "Mercado Libre", meli: "Mercado Libre", walmart: "Walmart", sears: "Sears", coppel: "Coppel", elpalaciodehierro: "El Palacio de Hierro", shein: "Shein", zara: "Zara", hm: "H&M" };
+    if (h === "a.co") return "Amazon";
     var L = h.split("."); for (var k in T) if (L.indexOf(k) >= 0) return T[k];
     return "la tienda";
   }
