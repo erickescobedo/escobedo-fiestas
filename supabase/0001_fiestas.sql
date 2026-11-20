@@ -123,13 +123,13 @@ declare f uuid; inv panel.fiesta_invitados; tel text; n text := trim(coalesce(p_
 begin
   select fiesta_id into f from panel.fiesta_actual;
   if f is null then raise exception 'No hay fiesta activa'; end if;
-  if length(n) = 0 or length(n) > 80 then raise exception 'Nombre inválido'; end if;
   if p_asiste is null then raise exception 'Falta la respuesta'; end if;
   if (select count(*) from panel.fiesta_rsvps where fiesta_id = f) >= 600 then raise exception 'Límite de confirmaciones'; end if;
-  if coalesce(p_codigo, '') <> '' then
-    select * into inv from panel.fiesta_invitados where codigo = lower(p_codigo) and fiesta_id = f;
-  end if;
-  tel := coalesce(panel.telefono_wa(p_telefono), inv.telefono);
+  -- Solo familias dadas de alta en el panel (link con código). El nombre y el celular vienen del alta.
+  select * into inv from panel.fiesta_invitados where codigo = lower(coalesce(p_codigo, '')) and fiesta_id = f;
+  if inv.id is null then raise exception 'Invitación no encontrada'; end if;
+  n := inv.nombre;
+  tel := inv.telefono;
   if inv.id is not null then
     insert into panel.fiesta_rsvps (fiesta_id, invitado_id, nombre, asiste, adultos, ninos, alergias, mensaje, telefono)
     values (f, inv.id, n, p_asiste, case when p_asiste then least(greatest(coalesce(p_adultos,0),0),20) else 0 end,
@@ -216,7 +216,7 @@ begin
       'template', jsonb_build_object('name', 'recordatorio_cumple', 'language', jsonb_build_object('code', 'es_MX'),
         'components', jsonb_build_array(
           jsonb_build_object('type', 'body', 'parameters', jsonb_build_array(
-            jsonb_build_object('type', 'text', 'text', initcap(split_part(trim(r.nombre), ' ', 1))),
+            jsonb_build_object('type', 'text', 'text', trim(r.nombre)),
             jsonb_build_object('type', 'text', 'text', r.festejado),
             jsonb_build_object('type', 'text', 'text', to_char(r.ini, 'FMHH12:MI') || case when r.ini < '12:00' then ' am' else ' pm' end),
             jsonb_build_object('type', 'text', 'text', r.lugar))),

@@ -20,9 +20,8 @@
 
   <section class="card pad" id="rsvp" hidden aria-labelledby="r">
     <h2 id="r">¿Nos acompañas?</h2>
-    <p class="sub" id="saludo">Llena tus datos y toca Confirmar. Así de fácil.</p>
+    <p class="sub" id="saludo">Dinos si vienen y cuántos, y toca Confirmar.</p>
     <form id="f" novalidate>
-      <div class="field"><label for="nombre">Nombre o familia</label><input type="text" id="nombre" autocomplete="name" placeholder="Ej. Familia López" maxlength="80" enterkeyhint="send"></div>
       <div class="field">
         <span class="legend" id="lg-a">¿Vienen?</span>
         <div class="seg" role="radiogroup" aria-labelledby="lg-a">
@@ -35,13 +34,15 @@
           <div class="counter c-ad"><span class="legend">Adultos</span><div class="step"><button type="button" data-k="ad" data-d="-1" aria-label="Quitar adulto">−</button><output id="ad">1</output><button type="button" data-k="ad" data-d="1" aria-label="Agregar adulto">+</button></div></div>
           <div class="counter c-ni"><span class="legend">Niños</span><div class="step"><button type="button" data-k="ni" data-d="-1" aria-label="Quitar niño">−</button><output id="ni">1</output><button type="button" data-k="ni" data-d="1" aria-label="Agregar niño">+</button></div></div>
         </div>
-        <div class="field"><label for="alergias">Alergias o algo que debamos saber <span class="opt">(opcional)</span></label><input type="text" id="alergias" maxlength="200" placeholder="Ej. alergia al cacahuate"></div>
-        <div class="field" id="campo-tel"><label for="telefono">Tu celular <span class="opt">(opcional, para mandarte un recordatorio el día de la fiesta)</span></label><input type="tel" id="telefono" autocomplete="tel" placeholder="10 dígitos" maxlength="20"></div>
       </div>
-      <div class="field"><label for="mensaje">Un mensaje para <span id="nombre2"></span> <span class="opt">(opcional)</span></label><textarea id="mensaje" maxlength="500"></textarea></div>
       <p class="err" id="err" hidden></p>
       <button class="btn btn-blue btn-big" id="enviar" type="submit">Confirmar</button>
     </form>
+  </section>
+
+  <section class="card pad center" id="sin-codigo" hidden>
+    <h2>¿Nos acompañas?</h2>
+    <p class="sub" style="margin:0">Para confirmar, abre el link que te llegó por WhatsApp. Si no lo encuentras, escríbenos al número de abajo.</p>
   </section>
 
   <section class="card pad center thanks" id="gracias" hidden aria-live="polite">
