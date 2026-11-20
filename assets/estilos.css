@@ -279,3 +279,10 @@ body.inv{--ink:#22357F;--muted:#5B6390;--line:#D9D2C2;--soft:#FFFBF2;background-
 .title-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:0 4px}
 .hero h1{white-space:nowrap;font-size:clamp(2.3rem,12vw,4.4rem);padding:0 .06em}
 .big-age{font-size:clamp(5rem,24vw,8.2rem)}
+/* Márgenes de la página también con dibujos */
+body.inv{padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));padding-top:calc(40px + env(safe-area-inset-top,0px))}
+body.inv .bg-doodles>svg{opacity:.75}
+.card{isolation:isolate}
+.fill-layer{border-radius:0}
+.inv .rg{background:transparent}
+.inv .rg.mio{background:rgba(228,246,225,.55)}
