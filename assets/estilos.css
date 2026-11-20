@@ -307,3 +307,27 @@ body.inv{padding-top:calc(64px + env(safe-area-inset-top,0px));padding-bottom:ca
 /* Dibujos como imágenes ya pintadas (ligeras al hacer scroll) */
 .fill-layer>img,.bg-doodles>img{position:absolute;display:block;max-width:none;pointer-events:none;user-select:none;-webkit-user-drag:none}
 body.inv .bg-doodles>img{opacity:.9}
+
+/* Panel: gastos y pagos */
+.gs-nuevo>summary{list-style:none;display:inline-flex;width:auto}
+.gs-nuevo>summary::-webkit-details-marker{display:none}
+.gs-nuevo[open]>summary{opacity:.6}
+.gastos{display:grid;gap:12px;margin-top:10px}
+.gasto{border:2px solid var(--line);border-radius:18px;padding:14px;display:grid;gap:10px}
+.gasto.pagado{border-color:#BFE3B4;background:#F7FCF5}
+.gasto .g-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 12px;align-items:flex-start}
+.gasto .g-top b{font-size:1.05rem;overflow-wrap:anywhere}
+.gasto .g-sub{color:var(--muted);font-size:.88rem}
+.gasto .g-montos{font-variant-numeric:tabular-nums;font-weight:700}
+.g-bar{height:8px;border-radius:99px;background:#EEE9F6;overflow:hidden}
+.g-bar i{display:block;height:100%;background:#6CC163;border-radius:99px}
+.g-notas{font-size:.9rem;white-space:pre-wrap;color:var(--ink);margin:0}
+.pagos{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.pagos li{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;background:#F8F5FC;border-radius:12px;padding:8px 10px;font-size:.92rem}
+.pagos li .p-m{font-weight:800;font-variant-numeric:tabular-nums}
+.pagos li .p-d{color:var(--muted);flex:1 1 140px}
+.pagos li .p-acts{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.g-acts{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.g-form{background:#F8F5FC;border-radius:14px;padding:12px}
+.g-form input[type=file]{font-size:.9rem;width:100%}
+.pill.venc{background:#FDE2E2;color:#B42318}

@@ -15,7 +15,7 @@
 <meta name="theme-color" content="#F4F1FA">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Gochi+Hand&family=Pacifico&family=Shantell+Sans:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
-<link rel="stylesheet" href="../assets/estilos.css?v=202611211200">
+<link rel="stylesheet" href="../assets/estilos.css?v=202611211230">
 <style>body{--bg:#F4F1FA;background-image:none}.check{display:flex;gap:10px;align-items:center;font-weight:700}.check input{width:22px;height:22px}</style>
 </head>
 <body>
@@ -58,6 +58,7 @@
       <button role="tab" id="tab-conf" aria-controls="p-conf" aria-selected="true">Confirmaciones</button>
       <button role="tab" id="tab-inv" aria-controls="p-inv" aria-selected="false">Invitados</button>
       <button role="tab" id="tab-reg" aria-controls="p-reg" aria-selected="false">Regalos</button>
+      <button role="tab" id="tab-gas" aria-controls="p-gas" aria-selected="false">Gastos</button>
       <button role="tab" id="tab-fiesta" aria-controls="p-fiesta" aria-selected="false">Datos de la fiesta</button>
     </nav>
 
@@ -129,6 +130,30 @@
       <div id="rlist"></div>
     </section>
 
+    <section class="card pad" id="p-gas" role="tabpanel" aria-labelledby="tab-gas" hidden>
+      <h2>Gastos y pagos</h2>
+      <p class="sub">Anota cada gasto con su costo total (salón, entradas extra, pastel…) y registra cada pago con su recibo para cualquier aclaración. Solo lo ve quien entra al panel.</p>
+      <div class="totals">
+        <div class="tot"><b id="gs-total">$0</b><span>Costo total</span></div>
+        <div class="tot"><b id="gs-pag">$0</b><span>Pagado</span></div>
+        <div class="tot"><b id="gs-pend">$0</b><span>Por pagar</span></div>
+        <div class="tot"><b id="gs-sinrec">0</b><span>Pagos sin recibo</span></div>
+      </div>
+      <details class="gs-nuevo" id="gs-nuevo">
+        <summary class="btn btn-blue btn-sm" style="background:var(--violet)">+ Agregar gasto</summary>
+        <form class="mini" id="gs-form" novalidate style="margin-top:12px">
+          <label class="full">Concepto<input type="text" id="gs-concepto" maxlength="100" placeholder="Ej. Salón Happy Time" autocomplete="off"></label>
+          <label>Proveedor <span class="opt">(opcional)</span><input type="text" id="gs-prov" maxlength="100" placeholder="Ej. Happy Time" autocomplete="off"></label>
+          <label>Costo total<input type="text" id="gs-monto" inputmode="decimal" placeholder="$0.00" autocomplete="off"></label>
+          <label>Fecha límite de pago <span class="opt">(opcional)</span><input type="date" id="gs-limite"></label>
+          <label class="full">Notas <span class="opt">(opcional)</span><textarea id="gs-notas" maxlength="500" rows="2" placeholder="Ej. Incluye 20 niños; cada entrada extra $180"></textarea></label>
+          <button class="btn btn-blue full" type="submit" style="background:var(--violet)">Guardar gasto</button>
+        </form>
+      </details>
+      <p class="status" id="gs-st" role="status"></p>
+      <div id="gs-list"></div>
+    </section>
+
     <section class="card pad" id="p-fiesta" role="tabpanel" aria-labelledby="tab-fiesta" hidden>
       <div class="split">
         <div>
@@ -168,8 +193,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="../assets/config.js?v=202611211200"></script>
-<script src="../assets/temas.js?v=202611211200"></script>
-<script src="../assets/panel.js?v=202611211200"></script>
+<script src="../assets/config.js?v=202611211230"></script>
+<script src="../assets/temas.js?v=202611211230"></script>
+<script src="../assets/panel.js?v=202611211230"></script>
 </body>
 </html>

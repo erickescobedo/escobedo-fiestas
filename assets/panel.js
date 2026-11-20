@@ -7,7 +7,7 @@
   var SITE = String(C.SITE_URL).replace(/\/+$/, "");
   var LISTA = 'id,nombre,edad,fecha,ini,fin,lugar,maps,tel,tema,kicker,recordatorio,recordatorio_hora,creado_en';
 
-  var fiestas = [], actualId = null, partyId = null, cfg = null, rows = [], guests = [], msgs = [], gifts = [], timer = null, dirty = false, draft = {};
+  var fiestas = [], actualId = null, partyId = null, cfg = null, rows = [], guests = [], msgs = [], gifts = [], gastos = [], pagos = [], timer = null, dirty = false, draft = {};
 
   function setStatus(el, msg, bad){ el.textContent = msg; el.classList.toggle('bad', !!bad); }
   function hhmm(t){ return String(t || "").slice(0, 5); }
@@ -87,7 +87,7 @@
   });
 
   function selectParty(id){
-    partyId = id; rows = []; guests = []; msgs = []; gifts = []; dirty = false;
+    partyId = id; rows = []; guests = []; msgs = []; gifts = []; gastos = []; pagos = []; gAbierto = null; dirty = false;
     clearInterval(timer);
     sb.from('fiestas').select('*').eq('id', id).single().then(chk).then(function(f){ cfg = norm(f); fillSettings(); renderRecInfo(); fillGiftText(); });
     loadLists(); timer = setInterval(function(){ if (!document.hidden) loadLists(); }, 20000);
@@ -97,28 +97,30 @@
 
   var ultimaFirma = "", pendiente = false;
   function escribiendo(){ var a = document.activeElement; return !!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'checkbox' && $('app').contains(a)); }
-  function pintarListas(){ var y = window.scrollY; renderConf(); renderGuests(); renderRecInfo(); renderGifts(); if (Math.abs(window.scrollY - y) > 2) window.scrollTo(0, y); }
-  document.addEventListener('focusout', function(){ setTimeout(function(){ if (pendiente && !escribiendo()) { pendiente = false; ultimaFirma = JSON.stringify([rows, guests, msgs, gifts]); pintarListas(); } }, 250); });
+  function pintarListas(forzar){ var y = window.scrollY; renderConf(); renderGuests(); renderRecInfo(); renderGifts(); if (forzar || !gAbierto) renderGastos(); if (Math.abs(window.scrollY - y) > 2) window.scrollTo(0, y); }
+  document.addEventListener('focusout', function(){ setTimeout(function(){ if (pendiente && !escribiendo()) { pendiente = false; ultimaFirma = JSON.stringify([rows, guests, msgs, gifts, gastos, pagos]); pintarListas(); } }, 250); });
   function loadLists(forzar){
     var id = partyId;
     return Promise.all([
       sb.from('fiesta_rsvps').select('*').eq('fiesta_id', id),
       sb.from('fiesta_invitados').select('*').eq('fiesta_id', id),
       sb.from('fiesta_mensajes').select('invitado_id,rsvp_id,tipo,estado,error,creado_en').eq('fiesta_id', id).order('creado_en', { ascending: false }),
-      sb.from('fiesta_regalos').select('*').eq('fiesta_id', id).order('orden').order('creado_en')
+      sb.from('fiesta_regalos').select('*').eq('fiesta_id', id).order('orden').order('creado_en'),
+      sb.from('fiesta_gastos').select('*').eq('fiesta_id', id).order('creado_en'),
+      sb.from('fiesta_pagos').select('*').eq('fiesta_id', id).order('fecha').order('creado_en')
     ]).then(function(r){
       if (id !== partyId) return;
-      var nuevo = [chk(r[0]), chk(r[1]), chk(r[2]), chk(r[3])], firma = JSON.stringify(nuevo);
-      rows = nuevo[0]; guests = nuevo[1]; msgs = nuevo[2]; gifts = nuevo[3];
+      var nuevo = [chk(r[0]), chk(r[1]), chk(r[2]), chk(r[3]), chk(r[4]), chk(r[5])], firma = JSON.stringify(nuevo);
+      rows = nuevo[0]; guests = nuevo[1]; msgs = nuevo[2]; gifts = nuevo[3]; gastos = nuevo[4]; pagos = nuevo[5];
       if (firma === ultimaFirma && !forzar) return;
       // Mientras escribes en el celular no se redibujan las listas: eso movía la pantalla. Se actualiza al terminar.
       if (escribiendo() && !forzar) { pendiente = true; return; }
-      ultimaFirma = firma; pendiente = false; pintarListas();
+      ultimaFirma = firma; pendiente = false; pintarListas(forzar);
     }).catch(function(){ setStatus($('conf-st'), "No se pudo actualizar la lista. Revisa tu internet.", true); });
   }
 
   /* ---------- pestañas ---------- */
-  var TABS = ['conf', 'inv', 'reg', 'fiesta'];
+  var TABS = ['conf', 'inv', 'reg', 'gas', 'fiesta'];
   function tab(t){ TABS.forEach(function(o){ $('tab-' + o).setAttribute('aria-selected', String(o === t)); $('p-' + o).hidden = o !== t; }); if (t === 'fiesta') preview(); }
   TABS.forEach(function(t){ $('tab-' + t).addEventListener('click', function(){ tab(t); }); });
 
@@ -302,6 +304,170 @@
     var u = e.target.closest('[data-rup]');
     if (u) { var i = +u.dataset.rup, a = gifts[i - 1], b = gifts[i]; gifts[i - 1] = b; gifts[i] = a; renderGifts();
       Promise.all(gifts.map(function(g, k){ return g.orden === k + 1 ? null : sb.from('fiesta_regalos').update({ orden: k + 1 }).eq('id', g.id).then(chk); })).then(loadLists).catch(fail); }
+  });
+
+
+  /* ---------- gastos y pagos ---------- */
+  var gAbierto = null;   // "pago:<gastoId>", "edit:<gastoId>" o "rec:<pagoId>": formulario abierto, no se redibuja solo
+  var BUCKET = 'fiesta-recibos';
+  function dinero(n){ return (+n || 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function leerMonto(v){ var t = String(v || "").replace(/[^\d.,-]/g, ""); if (/,\d{1,2}$/.test(t) && t.indexOf('.') < 0) t = t.replace(',', '.'); t = t.replace(/,/g, ""); var n = Math.round(parseFloat(t) * 100) / 100; return isFinite(n) ? n : NaN; }
+  function hoy(){ var d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); }
+  function fechaCorta(f){ if (!f) return ""; var p = f.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }); }
+  function pagosDe(g){ return pagos.filter(function(p){ return p.gasto_id === g.id; }); }
+  function pagadoDe(g){ return pagosDe(g).reduce(function(s, p){ return s + (+p.monto || 0); }, 0); }
+  function formPago(g, resta){
+    return '<form class="g-form mini" data-gpform="' + esc(g.id) + '" novalidate>' +
+      '<label>Monto<input type="text" name="monto" inputmode="decimal" value="' + (resta > 0 ? resta.toFixed(2) : '') + '"></label>' +
+      '<label>Fecha<input type="date" name="fecha" value="' + hoy() + '"></label>' +
+      '<label>Forma de pago<select name="metodo"><option>Transferencia</option><option>Efectivo</option><option>Tarjeta</option><option>Otro</option></select></label>' +
+      '<label>Nota <span class="opt">(opcional)</span><input type="text" name="nota" maxlength="200" placeholder="Ej. Anticipo"></label>' +
+      '<label class="full">Recibo o comprobante <span class="opt">(foto o PDF)</span><input type="file" name="recibo" accept="image/*,application/pdf"></label>' +
+      '<div class="g-acts full"><button class="btn btn-blue btn-sm" type="submit" style="background:var(--violet)">Guardar pago</button><button class="x" type="button" data-gcerrar="1">Cancelar</button></div></form>';
+  }
+  function formGasto(g){
+    return '<form class="g-form mini" data-geform="' + esc(g.id) + '" novalidate>' +
+      '<label class="full">Concepto<input type="text" name="concepto" maxlength="100" value="' + esc(g.concepto) + '"></label>' +
+      '<label>Proveedor<input type="text" name="proveedor" maxlength="100" value="' + esc(g.proveedor) + '"></label>' +
+      '<label>Costo total<input type="text" name="total" inputmode="decimal" value="' + (+g.total).toFixed(2) + '"></label>' +
+      '<label>Fecha límite<input type="date" name="limite" value="' + esc(g.fecha_limite || '') + '"></label>' +
+      '<label class="full">Notas<textarea name="notas" maxlength="500" rows="2">' + esc(g.notas) + '</textarea></label>' +
+      '<div class="g-acts full"><button class="btn btn-blue btn-sm" type="submit" style="background:var(--violet)">Guardar cambios</button><button class="x" type="button" data-gcerrar="1">Cancelar</button></div></form>';
+  }
+  function renderGastos(){
+    var tot = 0, pag = 0, sinRec = 0;
+    gastos.forEach(function(g){ tot += +g.total || 0; pag += Math.min(pagadoDe(g), +g.total || 0); });
+    pagos.forEach(function(p){ if (!p.recibo) sinRec++; });
+    $('gs-total').textContent = dinero(tot); $('gs-pag').textContent = dinero(pagos.reduce(function(s, p){ return s + (+p.monto || 0); }, 0));
+    $('gs-pend').textContent = dinero(Math.max(0, tot - pag)); $('gs-sinrec').textContent = sinRec;
+    if (!gastos.length) { $('gs-list').innerHTML = '<p class="empty">Aún no hay gastos. Toca "Agregar gasto" para anotar el salón, las entradas extra, etc.</p>'; return; }
+    var hoyS = hoy();
+    function resta(g){ return Math.round(((+g.total || 0) - pagadoDe(g)) * 100) / 100; }
+    var lista = gastos.slice().sort(function(a, b){ var ra = resta(a) > 0, rb = resta(b) > 0; if (ra !== rb) return ra ? -1 : 1; return String(a.fecha_limite || '9999').localeCompare(String(b.fecha_limite || '9999')) || String(a.creado_en).localeCompare(String(b.creado_en)); });
+    $('gs-list').innerHTML = '<div class="gastos">' + lista.map(function(g){
+      var pg = pagadoDe(g), r = resta(g), T = +g.total || 0, ps = pagosDe(g), pct = T > 0 ? Math.min(100, Math.round(pg / T * 100)) : (pg > 0 ? 100 : 0);
+      var pill = r <= 0 && T > 0 ? '<span class="pill si">Pagado</span>' : (g.fecha_limite && g.fecha_limite < hoyS ? '<span class="pill venc">Vencido · faltan ' + dinero(r) + '</span>' : '<span class="pill pend">Faltan ' + dinero(Math.max(0, r)) + '</span>');
+      var head = '<div class="g-top"><div><b>' + esc(g.concepto) + '</b>' + (g.proveedor ? '<div class="g-sub">' + esc(g.proveedor) + '</div>' : '') + '</div>' + pill + '</div>' +
+        '<div class="g-montos">Pagado ' + dinero(pg) + ' de ' + dinero(T) + (r < 0 ? ' <span class="g-sub">(se pagó ' + dinero(-r) + ' de más)</span>' : '') + '</div>' +
+        '<div class="g-bar" aria-hidden="true"><i style="width:' + pct + '%"></i></div>' +
+        (g.fecha_limite ? '<div class="g-sub">Fecha límite: ' + fechaCorta(g.fecha_limite) + '</div>' : '') +
+        (g.notas ? '<p class="g-notas">' + esc(g.notas) + '</p>' : '');
+      if (gAbierto === 'edit:' + g.id) return '<div class="gasto">' + formGasto(g) + '</div>';
+      var lp = ps.length ? '<ul class="pagos">' + ps.map(function(p){
+        var rec = p.recibo ? '<button class="x" type="button" data-pver="' + esc(p.id) + '">Ver recibo</button>' : '<span class="pill no">Sin recibo</span>';
+        var fr = gAbierto === 'rec:' + p.id ? '<form class="g-form" data-prform="' + esc(p.id) + '" style="flex-basis:100%;display:grid;gap:8px" novalidate><input type="file" name="recibo" accept="image/*,application/pdf"><div class="g-acts"><button class="btn btn-blue btn-sm" type="submit" style="background:var(--violet)">Subir</button><button class="x" type="button" data-gcerrar="1">Cancelar</button></div></form>' : '';
+        return '<li><span class="p-m">' + dinero(p.monto) + '</span><span class="p-d">' + fechaCorta(p.fecha) + (p.metodo ? ' · ' + esc(p.metodo) : '') + (p.nota ? ' · ' + esc(p.nota) : '') + '</span>' +
+          '<span class="p-acts">' + rec + '<button class="x" type="button" data-prec="' + esc(p.id) + '">' + (p.recibo ? 'Cambiar recibo' : 'Subir recibo') + '</button><button class="x" type="button" data-pdel="' + esc(p.id) + '">Quitar</button></span>' + fr + '</li>';
+      }).join('') + '</ul>' : '<div class="g-sub">Sin pagos registrados.</div>';
+      var acts = gAbierto === 'pago:' + g.id ? formPago(g, r) :
+        '<div class="g-acts"><button class="btn btn-blue btn-sm" type="button" data-gpago="' + esc(g.id) + '" style="background:var(--violet)">Registrar pago</button><button class="x" type="button" data-gedit2="' + esc(g.id) + '">Editar</button><button class="x" type="button" data-gdel2="' + esc(g.id) + '">Quitar gasto</button></div>';
+      return '<div class="gasto' + (r <= 0 && T > 0 ? ' pagado' : '') + '">' + head + lp + acts + '</div>';
+    }).join('') + '</div>';
+  }
+  function abrir(estado){ gAbierto = estado; renderGastos(); var f = $('gs-list').querySelector('form input:not([type=file]),form input[type=file]'); if (f && f.type !== 'file') { f.focus({ preventScroll: true }); } }
+  /* Fotos grandes se achican antes de subir (máx. 2000 px) para que suban rápido con datos móviles. */
+  function prepararArchivo(f){
+    if (!f || !/^image\/(jpeg|png|webp)$/.test(f.type) || f.size < 1.5e6) return Promise.resolve(f);
+    return new Promise(function(ok){
+      var im = new Image(), u = URL.createObjectURL(f);
+      im.onload = function(){
+        var k = Math.min(1, 2000 / Math.max(im.width, im.height)), c = document.createElement('canvas');
+        c.width = Math.round(im.width * k); c.height = Math.round(im.height * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+        c.toBlob(function(b){ URL.revokeObjectURL(u); ok(b ? new File([b], f.name.replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg' }) : f); }, 'image/jpeg', 0.85);
+      };
+      im.onerror = function(){ URL.revokeObjectURL(u); ok(f); };
+      im.src = u;
+    });
+  }
+  function subirRecibo(f){
+    if (!f) return Promise.resolve(null);
+    if (f.size > 10 * 1024 * 1024) return Promise.reject(new Error("El archivo pesa más de 10 MB."));
+    return prepararArchivo(f).then(function(a){
+      var ext = (/\.(\w{1,5})$/.exec(a.name) || [, a.type === 'application/pdf' ? 'pdf' : 'jpg'])[1].toLowerCase();
+      var path = partyId + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+      return sb.storage.from(BUCKET).upload(path, a, { contentType: a.type || undefined, upsert: false }).then(function(res){ if (res.error) throw res.error; return { path: path, nombre: f.name.slice(0, 200) }; });
+    });
+  }
+  $('gs-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    var st = $('gs-st'), concepto = $('gs-concepto').value.trim(), total = leerMonto($('gs-monto').value);
+    if (!partyId) { setStatus(st, "Primero crea la fiesta.", true); return; }
+    if (!concepto) { setStatus(st, "Escribe el concepto.", true); $('gs-concepto').focus(); return; }
+    if (!(total >= 0)) { setStatus(st, "Escribe el costo total (solo números).", true); $('gs-monto').focus(); return; }
+    sb.from('fiesta_gastos').insert({ fiesta_id: partyId, concepto: concepto, proveedor: $('gs-prov').value.trim(), total: total, fecha_limite: $('gs-limite').value || null, notas: $('gs-notas').value.trim() }).then(chk)
+      .then(function(){ setStatus(st, "Agregué " + concepto + ". Ya puedes registrarle pagos."); ['gs-concepto', 'gs-prov', 'gs-monto', 'gs-limite', 'gs-notas'].forEach(function(k){ $(k).value = ''; }); $('gs-nuevo').open = false; return loadLists(true); })
+      .catch(function(){ setStatus(st, "No se pudo guardar. Intenta de nuevo.", true); });
+  });
+  $('gs-list').addEventListener('click', function(e){
+    var st = $('gs-st'), t;
+    if ((t = e.target.closest('[data-gpago]'))) { abrir('pago:' + t.dataset.gpago); return; }
+    if ((t = e.target.closest('[data-gedit2]'))) { abrir('edit:' + t.dataset.gedit2); return; }
+    if ((t = e.target.closest('[data-prec]'))) { abrir('rec:' + t.dataset.prec); return; }
+    if (e.target.closest('[data-gcerrar]')) { gAbierto = null; renderGastos(); return; }
+    if ((t = e.target.closest('[data-gdel2]'))) {
+      var g = gastos.find(function(x){ return x.id === t.dataset.gdel2; }), ps = g ? pagosDe(g) : [];
+      twoStep(t, function(){
+        var files = ps.map(function(p){ return p.recibo; }).filter(Boolean);
+        sb.from('fiesta_gastos').delete().eq('id', g.id).then(chk)
+          .then(function(){ if (files.length) return sb.storage.from(BUCKET).remove(files); })
+          .then(function(){ setStatus(st, "Quité " + g.concepto + "."); return loadLists(true); })
+          .catch(function(){ setStatus(st, "No se pudo quitar.", true); });
+      }, ps.length ? "¿Quitar con sus " + ps.length + " pagos?" : "¿Quitar?");
+      return;
+    }
+    if ((t = e.target.closest('[data-pdel]'))) {
+      var p = pagos.find(function(x){ return x.id === t.dataset.pdel; });
+      twoStep(t, function(){
+        sb.from('fiesta_pagos').delete().eq('id', p.id).then(chk)
+          .then(function(){ if (p.recibo) return sb.storage.from(BUCKET).remove([p.recibo]); })
+          .then(function(){ setStatus(st, "Quité el pago de " + dinero(p.monto) + "."); return loadLists(true); })
+          .catch(function(){ setStatus(st, "No se pudo quitar el pago.", true); });
+      }, "¿Quitar pago?");
+      return;
+    }
+    if ((t = e.target.closest('[data-pver]'))) {
+      var pv = pagos.find(function(x){ return x.id === t.dataset.pver; }); if (!pv || !pv.recibo) return;
+      var w = window.open('', '_blank');   // se abre antes para que el celular no lo bloquee
+      sb.storage.from(BUCKET).createSignedUrl(pv.recibo, 600).then(function(res){
+        if (res.error || !res.data) throw res.error || new Error('x');
+        if (w) w.location.href = res.data.signedUrl; else location.href = res.data.signedUrl;
+      }).catch(function(){ if (w) w.close(); setStatus(st, "No se pudo abrir el recibo.", true); });
+    }
+  });
+  $('gs-list').addEventListener('submit', function(e){
+    e.preventDefault();
+    var f = e.target, st = $('gs-st'), btn = f.querySelector('[type=submit]');
+    function fin(){ btn.disabled = false; }
+    if (f.dataset.geform) {
+      var concepto = f.concepto.value.trim(), total = leerMonto(f.total.value);
+      if (!concepto) { setStatus(st, "Escribe el concepto.", true); return; }
+      if (!(total >= 0)) { setStatus(st, "Escribe el costo total (solo números).", true); return; }
+      btn.disabled = true;
+      sb.from('fiesta_gastos').update({ concepto: concepto, proveedor: f.proveedor.value.trim(), total: total, fecha_limite: f.limite.value || null, notas: f.notas.value.trim() }).eq('id', f.dataset.geform).then(chk)
+        .then(function(){ gAbierto = null; setStatus(st, "Guardado: " + concepto + "."); return loadLists(true); })
+        .catch(function(){ fin(); setStatus(st, "No se pudo guardar.", true); });
+      return;
+    }
+    if (f.dataset.gpform) {
+      var monto = leerMonto(f.monto.value), archivo = f.recibo.files[0];
+      if (!(monto > 0)) { setStatus(st, "Escribe el monto del pago.", true); f.monto.focus(); return; }
+      btn.disabled = true; btn.textContent = archivo ? "Subiendo recibo…" : "Guardando…";
+      subirRecibo(archivo).then(function(r){
+        return sb.from('fiesta_pagos').insert({ gasto_id: f.dataset.gpform, fiesta_id: partyId, monto: monto, fecha: f.fecha.value || hoy(), metodo: f.metodo.value, nota: f.nota.value.trim(), recibo: r ? r.path : '', recibo_nombre: r ? r.nombre : '' }).then(chk);
+      }).then(function(){ gAbierto = null; setStatus(st, "Pago de " + dinero(monto) + " registrado" + (archivo ? " con su recibo." : ". Puedes subir el recibo después.")); return loadLists(true); })
+        .catch(function(x){ fin(); btn.textContent = "Guardar pago"; setStatus(st, "No se pudo guardar el pago" + (x && /10 MB/.test(x.message) ? ": el archivo pesa más de 10 MB." : ". Intenta de nuevo."), true); });
+      return;
+    }
+    if (f.dataset.prform) {
+      var a = f.recibo.files[0], pr = pagos.find(function(x){ return x.id === f.dataset.prform; });
+      if (!a) { setStatus(st, "Elige la foto o el PDF del recibo.", true); return; }
+      btn.disabled = true; btn.textContent = "Subiendo…";
+      subirRecibo(a).then(function(r){
+        return sb.from('fiesta_pagos').update({ recibo: r.path, recibo_nombre: r.nombre }).eq('id', pr.id).then(chk)
+          .then(function(){ if (pr.recibo) return sb.storage.from(BUCKET).remove([pr.recibo]); });
+      }).then(function(){ gAbierto = null; setStatus(st, "Recibo guardado."); return loadLists(true); })
+        .catch(function(x){ fin(); btn.textContent = "Subir"; setStatus(st, "No se pudo subir el recibo" + (x && /10 MB/.test(x.message) ? ": pesa más de 10 MB." : ". Intenta de nuevo."), true); });
+    }
   });
 
   /* ---------- PDF ---------- */
