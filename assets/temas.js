@@ -54,7 +54,6 @@
       '<div class="row"><div class="ico" style="background:#E4F1FD"><svg viewBox="0 0 24 24" fill="none" stroke="#2F85CC" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"></path><circle cx="12" cy="9.5" r="2.5"></circle></svg></div>' +
         '<div style="flex:1"><div class="lbl">Dónde</div><div class="val" data-v="lugar"></div></div>' +
         '<a class="btn btn-blue" data-v="maps" target="_blank" rel="noopener">Cómo llegar</a></div>' +
-      '<div class="strip in-card" data-strip="7" aria-hidden="true"></div>' +
     '</section>';
   }
 
