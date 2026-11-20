@@ -44,7 +44,7 @@
     <nav class="tabs" role="tablist" aria-label="Secciones">
       <button role="tab" id="tab-conf" aria-controls="p-conf" aria-selected="true">Confirmaciones</button>
       <button role="tab" id="tab-inv" aria-controls="p-inv" aria-selected="false">Invitados</button>
-      <button role="tab" id="tab-fiesta" aria-controls="p-fiesta" aria-selected="false">Fiesta y temática</button>
+      <button role="tab" id="tab-fiesta" aria-controls="p-fiesta" aria-selected="false">Datos de la fiesta</button>
     </nav>
 
     <section class="card pad" id="p-conf" role="tabpanel" aria-labelledby="tab-conf">
@@ -96,7 +96,7 @@
     <section class="card pad" id="p-fiesta" role="tabpanel" aria-labelledby="tab-fiesta" hidden>
       <div class="split">
         <div>
-          <h2>Fiesta y temática</h2>
+          <h2>Datos de la fiesta</h2>
           <p class="sub">La vista previa cambia mientras escribes. Los invitados ven los cambios al guardar.</p>
           <div class="mini">
             <label>Nombre<input type="text" id="s-nombre" maxlength="40"></label>
@@ -113,7 +113,6 @@
             <label class="check"><input type="checkbox" id="s-rec">Mandar recordatorio el día de la fiesta a quienes confirmaron que sí van</label>
             <label style="font-weight:700;font-size:.85rem;display:grid;gap:4px;max-width:200px">Hora del recordatorio<input type="time" id="s-rech"></label>
           </div>
-          <div class="field"><span class="legend">Temática</span><div class="themes" id="s-temas" role="radiogroup" aria-label="Temática"></div></div>
           <div class="field"><span class="legend">Foto</span>
             <div class="fotoprev"><img id="s-fotoprev" alt="Foto actual"><label class="btn btn-ghost btn-sm" style="position:relative">Cambiar foto<input type="file" id="s-foto" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer"></label><button class="btn btn-ghost btn-sm" type="button" id="s-sinfoto">Quitar foto</button></div>
           </div>

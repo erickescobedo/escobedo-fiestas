@@ -92,7 +92,7 @@
     var conTel = rows.filter(function(r){ return r.asiste && r.telefono; }).length, yes = rows.filter(function(r){ return r.asiste; }).length;
     $('rec-info').textContent = cfg.recordatorio
       ? "Recordatorio automático: el " + I.fechaLarga(cfg.fecha).toLowerCase() + " a las " + I.horario(cfg.recordatorio_hora, cfg.recordatorio_hora).split(' a ')[0] + " " + (cfg.recordatorio_hora < "12:00" ? "am" : "pm") + ", por WhatsApp, a " + conTel + " de " + yes + " familias que vienen (las que tienen celular)."
-      : "El recordatorio automático está apagado (se activa en Fiesta y temática).";
+      : "El recordatorio automático está apagado (se activa en Datos de la fiesta).";
   }
   function renderConf(){
     var yes = rows.filter(function(r){ return r.asiste; });
@@ -243,8 +243,6 @@
   function paintSettings(){
     Object.keys(SF).forEach(function(k){ $(SF[k]).value = k === 'tel' ? I.fmtTel(draft[k]) : (draft[k] == null ? "" : draft[k]); });
     $('s-rec').checked = !!draft.recordatorio;
-    $('s-temas').innerHTML = Object.keys(I.TEMAS).map(function(k){ var t = I.TEMAS[k];
-      return '<label><input type="radio" name="tema" value="' + k + '"' + (draft.tema === k ? ' checked' : '') + '>' + esc(t.label) + '<span class="sw">' + t.c.slice(0,5).map(function(c){ return '<i style="background:' + c + '"></i>'; }).join('') + '</span></label>'; }).join('');
     $('s-fotoprev').hidden = !draft.foto; if (draft.foto) $('s-fotoprev').src = draft.foto;
     $('s-guardar').hidden = !cfg;
     preview();

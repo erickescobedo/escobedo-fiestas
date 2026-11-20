@@ -19,6 +19,16 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font
   background-size:90px 90px,130px 130px;transition:background-color .3s}
 img{max-width:100%}
 [hidden]{display:none!important}
+body{position:relative}
+.bg-doodles{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.bg-doodles .bgd{position:absolute;opacity:.42;animation:none!important}
+body>main{position:relative;z-index:1}
+.strip.between{padding:0 10px;margin:-4px 0;align-items:center}
+.strip.between .dd:nth-child(odd){transform:rotate(-10deg)}.strip.between .dd:nth-child(even){transform:rotate(9deg) translateY(4px)}
+.strip.in-card{padding:0;margin:4px 0 10px}
+.strip.in-card .dd{width:clamp(28px,8vw,40px);height:clamp(28px,8vw,40px)}
+.strip.in-card .dd.s{width:clamp(20px,5.5vw,28px);height:clamp(20px,5.5vw,28px)}
+.details .strip.in-card{margin:6px 0 0}
 .wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
 .card{background:var(--frost);border-radius:28px;box-shadow:0 10px 30px -12px rgba(40,50,90,.4);position:relative}
 
