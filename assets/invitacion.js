@@ -6,7 +6,7 @@
 
   var code = (new URLSearchParams(location.search).get('i') || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20);
   if (code === "general") code = "";
-  var cfg = null, familia = "", counts = { ad: 2, ni: 1 };
+  var cfg = null, familia = "", counts = { ad: 1, ni: 1 };
 
   function asiste(){ return document.querySelector('input[name=asiste]:checked').value === 'si'; }
   function refresh(){ $('ad').textContent = counts.ad; $('ni').textContent = counts.ni; $('quienes').hidden = !asiste(); }
