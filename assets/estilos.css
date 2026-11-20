@@ -303,3 +303,7 @@ body.inv{padding-top:calc(64px + env(safe-area-inset-top,0px));padding-bottom:ca
 .envio b{font-family:var(--marker);color:var(--navy);font-size:1.15rem}
 .envio p{margin:0;white-space:pre-line;font-weight:700;color:var(--navy);user-select:all}
 .envio .note{font-weight:600;color:var(--muted);user-select:auto}
+
+/* Dibujos como imágenes ya pintadas (ligeras al hacer scroll) */
+.fill-layer>img,.bg-doodles>img{position:absolute;display:block;max-width:none;pointer-events:none;user-select:none;-webkit-user-drag:none}
+body.inv .bg-doodles>img{opacity:.9}

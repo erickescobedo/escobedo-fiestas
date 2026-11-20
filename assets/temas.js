@@ -128,17 +128,43 @@
   var tema = TEMAS.dibujitos, llenos = [], tmr = null, obsR = null, obsM = null;
   function TAM(){ return Math.round(Math.max(30, Math.min(40, window.innerWidth / 11))); }
   var CAJAS = 'a,.btn,button,input,textarea,select,output,.seg label,.counter,.talla,.envio,.summary,.uline,.frame,.cloudbox,.sticker,.pin,.d-fecha svg,.big-age';
+  /* Cada dibujo se convierte UNA vez en imagen (PNG) con su textura de crayón ya aplicada.
+     Así el teléfono no recalcula filtros al hacer scroll (en iPhone eso dejaba la pantalla en blanco). */
+  var PNG = {}, M = 0.15;
+  function simbolo(id){ var i = SPRITES.indexOf('<symbol id="' + id + '"'); return i < 0 ? '' : SPRITES.slice(i, SPRITES.indexOf('</symbol>', i) + 9); }
+  function svgDe(key, px){
+    var parts = key.split(':'), f = SPRITES.match(/<filter id="crayon"[\s\S]*?<\/filter>/), T = px * (1 + 2 * M);
+    return '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + T + '" height="' + T + '"><defs>' + (f ? f[0] : '') + simbolo(parts[0]) + '</defs>' +
+      '<g filter="url(#crayon)"><use href="#' + parts[0] + '" xlink:href="#' + parts[0] + '" x="' + px * M + '" y="' + px * M + '" width="' + px + '" height="' + px + '"' + (parts[1] ? ' fill="' + parts[1] + '"' : '') + '/></g></svg>';
+  }
+  function imagen(key, S){
+    var dpr = Math.min(3, window.devicePixelRatio || 1), px = Math.round(S * dpr), id = key + '@' + px;
+    if (PNG[id]) return PNG[id];
+    var src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgDe(key, px));
+    PNG[id] = new Promise(function(ok){
+      var im = new Image();
+      im.onload = function(){
+        try {
+          var c = document.createElement('canvas'); c.width = c.height = Math.round(px * (1 + 2 * M));
+          c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+          c.toBlob(function(b){ ok(b ? URL.createObjectURL(b) : src); }, 'image/png');
+        } catch (e) { ok(src); }
+      };
+      im.onerror = function(){ ok(src); };
+      im.src = src;
+    });
+    return PNG[id];
+  }
   function uso(slot, x, y, sz){
-    var parts = (tema.d[(slot * 7 + 3) % tema.d.length] || "").split(':'), c = sz / 2;
-    return '<use href="#' + parts[0] + '" x="' + x + '" y="' + y + '" width="' + sz + '" height="' + sz + '"' + (parts[1] ? ' fill="' + parts[1] + '"' : '') +
-      ' transform="rotate(' + (((slot * 53) % 61) - 30) + ' ' + (x + c) + ' ' + (y + c) + ')"></use>';
+    var key = tema.d[(slot * 7 + 3) % tema.d.length] || "", m = sz * M;
+    return '<img alt="" data-k="' + esc(key) + '" style="left:' + Math.round(x - m) + 'px;top:' + Math.round(y - m) + 'px;width:' + Math.round(sz + 2 * m) + 'px;height:' + Math.round(sz + 2 * m) + 'px;transform:rotate(' + (((slot * 53) % 61) - 30) + 'deg)">';
   }
   /* Riega dibujos al azar en `layer` (que cubre `box`): todos del mismo tamaño, sin orden, sin tocar `obs`.
      Con o.centro, basta que el centro quede fuera de `obs` (en la página, los dibujos se asoman por debajo de las tarjetas). */
   function empacar(layer, box, obs, o){
     var W = box.width, H = box.height; if (!W || !H) { layer.innerHTML = ""; return; }
     var S = o.size, IN = o.inset, seed = o.seed, slot = o.slot, sep2 = o.sep * o.sep, cel = o.sep, grid = {};
-    var BANDA = 700, bandas = [];   // Safari no dibuja filtros sobre áreas muy grandes: se arma en franjas
+    var html = "";
     function rnd(){ seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
     function choca(b){ for (var i = 0; i < obs.length; i++) { var q = obs[i]; if (b[0] < q[2] && b[2] > q[0] && b[1] < q[3] && b[3] > q[1]) return true; } return false; }
     function cerca(cx, cy){
@@ -155,12 +181,10 @@
       var b = o.centro ? [cx - 2, cy - 2, cx + 2, cy + 2] : [x, y, x + S, y + S];
       if (choca(b) || cerca(cx, cy)) continue;
       var key = Math.floor(cx / cel) + ',' + Math.floor(cy / cel); (grid[key] = grid[key] || []).push([cx, cy]);
-      var bi = Math.floor(y / BANDA); bandas[bi] = (bandas[bi] || "") + uso(slot++, Math.round(x), Math.round(y - bi * BANDA), S);
+      html += uso(slot++, Math.round(x), Math.round(y), S);
     }
-    var html = "";
-    for (var i = 0; i < bandas.length; i++) if (bandas[i])
-      html += '<svg width="' + Math.ceil(W) + '" height="' + BANDA + '" style="position:absolute;left:0;top:' + (i * BANDA) + 'px;overflow:visible"><g filter="url(#crayon)">' + bandas[i] + '</g></svg>';
     layer.innerHTML = html;
+    layer.querySelectorAll('img[data-k]').forEach(function(im){ imagen(im.getAttribute('data-k'), S).then(function(u){ im.src = u; }); });
   }
   function rects(scope, base, sel, pad, obs){
     scope.querySelectorAll(sel).forEach(function(e){
