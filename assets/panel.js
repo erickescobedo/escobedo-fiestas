@@ -2,7 +2,8 @@
 (function(){
   "use strict";
   var I = window.Invit, C = window.FIESTAS, esc = I.esc, $ = function(id){ return document.getElementById(id); };
-  var sb = supabase.createClient(C.SUPABASE_URL, C.SUPABASE_KEY, { db: { schema: 'panel' } });
+  // La sesión se guarda en el dispositivo y se renueva sola; solo se pierde con "Salir" o si el navegador borra los datos del sitio.
+  var sb = supabase.createClient(C.SUPABASE_URL, C.SUPABASE_KEY, { db: { schema: 'panel' }, auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
   var SITE = String(C.SITE_URL).replace(/\/+$/, "");
   var LISTA = 'id,nombre,edad,fecha,ini,fin,lugar,maps,tel,tema,kicker,recordatorio,recordatorio_hora,creado_en';
 
@@ -26,14 +27,42 @@
     }).then(function(){ btn.disabled = false; });
   });
   $('salir').addEventListener('click', function(){ sb.auth.signOut(); });
+  var userId = null;
   sb.auth.onAuthStateChange(function(ev, session){
-    if (ev === 'TOKEN_REFRESHED') return;
+    var uid = session && session.user ? session.user.id : null;
+    // Al renovar la sesión o volver a la pestaña llegan avisos del mismo usuario: no hay que recargar nada.
+    if (uid && uid === userId && !$('app').hidden) return;
+    userId = uid;
     clearInterval(timer);
     $('cargando').hidden = true;
     if (!session) { $('app').hidden = true; $('login').hidden = false; return; }
     $('login').hidden = true; $('cargando').hidden = false; $('cargando').textContent = "Cargando…";
+    pedirPersistencia();
     setTimeout(boot, 0);
   });
+
+  /* ---------- que el dispositivo recuerde la sesión ---------- */
+  function pedirPersistencia(){ try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {} }
+  var esApp = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+  var ua = navigator.userAgent, iOS = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  var enApp = /FBAN|FBAV|Instagram|WhatsApp|Line\//i.test(ua);
+  var promptInst = null;
+  function noMolestar(){ try { return Date.now() - (+localStorage.getItem('fiestas-instalar-no') || 0) < 1000 * 60 * 60 * 24 * 30; } catch (e) { return false; } }
+  function mostrarInstalar(){
+    if (esApp || noMolestar()) return;
+    var txt = "";
+    if (enApp) txt = "Estás en el navegador de otra app y ahí la sesión se borra. Abre este link en Safari o Chrome y agrégalo a tu pantalla de inicio.";
+    else if (promptInst) txt = "Instala el panel como app en este dispositivo: se abre con un toque y no te vuelve a pedir la contraseña.";
+    else if (iOS) txt = "En Safari toca Compartir (el cuadro con la flecha) y luego \u201cAgregar a pantalla de inicio\u201d. Se abre como app y no te vuelve a pedir la contraseña.";
+    else if (/Android/i.test(ua)) txt = "En Chrome toca el menú ⋮ y luego \u201cAgregar a la pantalla principal\u201d. Se abre como app y no te vuelve a pedir la contraseña.";
+    if (!txt) return;
+    $('instalar-txt').textContent = txt; $('instalar-btn').hidden = !promptInst; $('instalar').hidden = false;
+  }
+  window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); promptInst = e; mostrarInstalar(); });
+  window.addEventListener('appinstalled', function(){ $('instalar').hidden = true; });
+  $('instalar-btn').addEventListener('click', function(){ if (!promptInst) return; promptInst.prompt(); promptInst.userChoice.then(function(){ promptInst = null; $('instalar').hidden = true; }); });
+  $('instalar-x').addEventListener('click', function(){ try { localStorage.setItem('fiestas-instalar-no', String(Date.now())); } catch (e) {} $('instalar').hidden = true; });
+  mostrarInstalar();
 
   function boot(){
     Promise.all([sb.from('fiestas').select(LISTA).order('fecha', { ascending: false }), sb.from('fiesta_actual').select('fiesta_id').maybeSingle()])

@@ -196,3 +196,5 @@ details.manual{margin-top:14px} details.manual summary{cursor:pointer;font-weigh
 .regalos .err{margin-top:10px}
 /* Panel: lista de regalos */
 .rg-admin .rg-name span{color:var(--muted);font-size:.85rem;overflow-wrap:anywhere}
+.instalar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;border:2px solid #DDD6FE;background:#F5F3FF}
+.instalar p{color:var(--muted);font-size:.92rem}
