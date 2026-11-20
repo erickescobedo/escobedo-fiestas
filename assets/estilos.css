@@ -286,3 +286,11 @@ body.inv .bg-doodles>svg{opacity:.75}
 .fill-layer{border-radius:0}
 .inv .rg{background:transparent}
 .inv .rg.mio{background:rgba(228,246,225,.55)}
+
+/* Dibujos regados al azar: sin franjas fijas, sin columnas, sin movimiento */
+.inv .strip,.preview .strip,.inv .dcol,.preview .dcol{display:none!important}
+.inv .photo-row,.preview .photo-row{display:flex;justify-content:center}
+.inv .photo-row .frame,.preview .photo-row .frame{width:min(250px,64vw)}
+.dd,.bgd,.fill-layer svg,.bg-doodles svg{animation:none!important}
+body.inv .bg-doodles>svg{opacity:.9}
+.hero{padding-top:26px}

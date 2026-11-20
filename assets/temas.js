@@ -126,26 +126,30 @@
 
   /* ---------- Relleno: dibujos en cada hueco libre, sin tocar letras, foto, botones ni campos ---------- */
   var tema = TEMAS.dibujitos, llenos = [], tmr = null, obsR = null, obsM = null;
-  var CAJAS = 'a,.btn,button,input,textarea,select,output,.seg label,.counter,.talla,.summary,.uline,.frame,.cloudbox,.sticker,.pin,.d-fecha svg,.big-age,.strip .dd,.dcol .dd';
+  function TAM(){ return Math.round(Math.max(30, Math.min(40, window.innerWidth / 11))); }
+  var CAJAS = 'a,.btn,button,input,textarea,select,output,.seg label,.counter,.talla,.summary,.uline,.frame,.cloudbox,.sticker,.pin,.d-fecha svg,.big-age';
   function uso(slot, x, y, sz){
     var parts = (tema.d[(slot * 7 + 3) % tema.d.length] || "").split(':'), c = sz / 2;
     return '<use href="#' + parts[0] + '" x="' + x + '" y="' + y + '" width="' + sz + '" height="' + sz + '"' + (parts[1] ? ' fill="' + parts[1] + '"' : '') +
-      ' transform="rotate(' + (((slot * 37) % 41) - 20) + ' ' + (x + c) + ' ' + (y + c) + ')"></use>';
+      ' transform="rotate(' + (((slot * 53) % 61) - 30) + ' ' + (x + c) + ' ' + (y + c) + ')"></use>';
   }
-  /* Coloca dibujos en `layer` (que cubre `box`) evitando los rectángulos `obs`. */
+  /* Riega dibujos al azar en `layer` (que cubre `box`): todos del mismo tamaño, sin orden, sin tocar `obs`.
+     Con o.centro, basta que el centro quede fuera de `obs` (en la página, los dibujos se asoman por debajo de las tarjetas). */
   function empacar(layer, box, obs, o){
     var W = box.width, H = box.height; if (!W || !H) { layer.innerHTML = ""; return; }
-    var IN = o.inset, seed = o.seed, slot = o.slot, out = "";
+    var S = o.size, IN = o.inset, seed = o.seed, slot = o.slot, out = "", hechos = [];
     function rnd(){ seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
-    function libre(b){ for (var i = 0; i < obs.length; i++) { var q = obs[i]; if (b[0] < q[2] && b[2] > q[0] && b[1] < q[3] && b[3] > q[1]) return false; } return true; }
-    for (var y = IN; y < H - IN - o.min; y += o.paso) {
-      for (var x = IN; x < W - IN - o.min; x += o.paso) {
-        for (var sz = Math.round(o.min + rnd() * (o.max - o.min)); sz >= o.min; sz -= 3) {
-          var b = [x, y, x + sz, y + sz];
-          if (b[2] > W - IN || b[3] > H - IN || !libre(b)) continue;
-          obs.push([x - 3, y - 3, x + sz + 3, y + sz + 3]); out += uso(slot++, x, y, sz); break;
-        }
-      }
+    function choca(b){ for (var i = 0; i < obs.length; i++) { var q = obs[i]; if (b[0] < q[2] && b[2] > q[0] && b[1] < q[3] && b[3] > q[1]) return true; } return false; }
+    var intentos = Math.round(W * H / (S * S) * 12);
+    for (var n = 0; n < intentos; n++) {
+      var x = IN + rnd() * (W - 2 * IN - S), y = IN + rnd() * (H - 2 * IN - S), cx = x + S / 2, cy = y + S / 2;
+      if (x < IN - 0.1 || y < IN - 0.1) continue;
+      var b = o.centro ? [cx - 2, cy - 2, cx + 2, cy + 2] : [x, y, x + S, y + S];
+      if (choca(b)) continue;
+      var cerca = false;
+      for (var k = 0; k < hechos.length; k++) { var dx = hechos[k][0] - cx, dy = hechos[k][1] - cy; if (dx * dx + dy * dy < o.sep * o.sep) { cerca = true; break; } }
+      if (cerca) continue;
+      hechos.push([cx, cy]); out += uso(slot++, Math.round(x), Math.round(y), S);
     }
     layer.innerHTML = '<svg width="' + Math.ceil(W) + '" height="' + Math.ceil(H) + '" style="display:block;overflow:visible"><g filter="url(#crayon)">' + out + '</g></svg>';
   }
@@ -175,14 +179,13 @@
       var r = e.getBoundingClientRect(), l = r.left - cr.left, t = r.top - cr.top, R = r.right - cr.left, B = r.bottom - cr.top, k = 6;
       obs.push([l - k, t - k, R + k, t + k], [l - k, B - k, R + k, B + k], [l - k, t - k, l + k, B + k], [R - k, t - k, R + k, B + k]);
     });
-    var hero = card.classList.contains('hero') || card.classList.contains('details');
-    empacar(layer, cr, obs, { inset: 15, seed: 11 + i * 101, slot: 500 + i * 300, paso: 7, min: hero ? 14 : 16, max: hero ? 36 : 30 });
+    empacar(layer, cr, obs, { size: TAM(), inset: 14, seed: 11 + i * 101, slot: 500 + i * 300, sep: TAM() * 1.25 });
   }
   function llenarPagina(){
     var bg = document.querySelector('body.inv > .bg-doodles'); if (!bg) return;
     var br = bg.getBoundingClientRect(), obs = [];
-    rects(document.body, br, 'main .card,main .strip .dd,#loading', 3, obs);
-    empacar(bg, br, obs, { inset: 2, seed: 29, slot: 2000, paso: 7, min: 14, max: 28 });
+    rects(document.body, br, 'main .card,#loading', -2, obs);
+    empacar(bg, br, obs, { size: TAM(), inset: -10, seed: 29, slot: 2000, sep: TAM() * 1.35, centro: true });
   }
   var ocupado = false;
   function llenarTodo(){
