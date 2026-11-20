@@ -11,7 +11,7 @@
 <meta name="theme-color" content="#FBF4E4">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Gochi+Hand&family=Pacifico&family=Shantell+Sans:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
-<link rel="stylesheet" href="assets/estilos.css?v=202611211300">
+<link rel="stylesheet" href="assets/estilos.css?v=202611201510">
 </head>
 <body class="inv">
 <div class="bg-doodles" data-bgdoodles="46" aria-hidden="true"></div>
@@ -66,23 +66,33 @@
   <section class="card pad regalos" id="regalos" hidden aria-labelledby="rg-t">
     <h2 id="rg-t">Ideas de regalo</h2>
     <p class="sub" id="rg-texto" hidden></p>
-    <div class="tallas" id="rg-tallas" hidden></div>
-    <ul class="rg-list" id="rg-list"></ul>
-    <p class="note" id="rg-nota" hidden>Toca "Yo lo llevo" en lo que vayas a regalar para que no se repita. Nadie más ve quién lo lleva.</p>
-    <p class="err" id="rg-err" hidden></p>
-    <div class="envio" id="rg-tarj" hidden>
-      <b>¿Prefieres una tarjeta de regalo?</b>
-      <p style="margin:0">Se compra en línea y llega por correo. Al comprarla, escribe este correo como destinatario:</p>
-      <p class="val" id="rg-tarj-correo" style="margin:0;user-select:all;overflow-wrap:anywhere"></p>
-      <button class="btn btn-ghost btn-sm" type="button" id="rg-tarj-copiar">Copiar correo</button>
-      <div class="btnrow" id="rg-tarj-links" style="margin:4px 0 0"></div>
-    </div>
-    <div class="envio" id="rg-envio" hidden>
-      <b>¿Prefieres enviarlo a casa?</b>
-      <p id="rg-envio-txt"></p>
-      <button class="btn btn-ghost btn-sm" type="button" id="rg-copiar">Copiar dirección</button>
-      <p class="note" style="text-align:left">Si lo mandas, toca "Yo lo llevo" en el regalo para que no se repita.</p>
-    </div>
+    <p class="sub" id="rg-libre" style="margin:0">Lo más importante es que vengan. Si quieren llevar algo, aquí dejamos unas ideas, pero pueden regalar lo que ustedes quieran.</p>
+    <details class="plegable" id="rg-ideas">
+      <summary><span id="rg-ideas-tit">Ver ideas de regalo</span></summary>
+      <div class="pl-body">
+        <div class="tallas" id="rg-tallas" hidden></div>
+        <ul class="rg-list" id="rg-list"></ul>
+        <p class="note" id="rg-nota" hidden>Si vas a regalar algo de la lista, toca "Yo lo llevo" para que no se repita. Nadie más ve quién lo lleva.</p>
+        <p class="err" id="rg-err" hidden></p>
+        <div class="envio" id="rg-envio" hidden>
+          <b>¿Prefieres enviarlo a casa?</b>
+          <p id="rg-envio-txt"></p>
+          <button class="btn btn-ghost btn-sm" type="button" id="rg-copiar">Copiar dirección</button>
+          <p class="note" style="text-align:left">Si lo mandas, toca "Yo lo llevo" en el regalo para que no se repita.</p>
+        </div>
+      </div>
+    </details>
+    <details class="plegable" id="rg-tarj" hidden>
+      <summary>Ver tarjetas de regalo</summary>
+      <div class="pl-body">
+        <div class="envio" style="margin-top:0">
+          <p style="margin:0;user-select:auto">Se compra en línea y llega por correo. Al comprarla, escribe este correo como destinatario:</p>
+          <p class="val" id="rg-tarj-correo" style="margin:0;user-select:all;overflow-wrap:anywhere"></p>
+          <button class="btn btn-ghost btn-sm" type="button" id="rg-tarj-copiar">Copiar correo</button>
+          <div class="btnrow" id="rg-tarj-links" style="margin:4px 0 0"></div>
+        </div>
+      </div>
+    </details>
   </section>
   <div class="strip between" id="rg-strip" data-strip="7" aria-hidden="true" hidden></div>
 
@@ -94,8 +104,8 @@
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="assets/config.js?v=202611211300"></script>
-<script src="assets/temas.js?v=202611211300"></script>
-<script src="assets/invitacion.js?v=202611211300"></script>
+<script src="assets/config.js?v=202611201510"></script>
+<script src="assets/temas.js?v=202611201510"></script>
+<script src="assets/invitacion.js?v=202611201510"></script>
 </body>
 </html>

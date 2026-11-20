@@ -31,7 +31,7 @@
     if (scroll) window.scrollTo({ top: $('gracias').offsetTop - 20, behavior: 'smooth' });
   }
   /* ---------- ideas de regalo ---------- */
-  var regalos = [];
+  var regalos = [], abiertoUnaVez = false;
   function safeLink(u){ return /^https:\/\//i.test(u || "") ? u : ""; }
   function tienda(u){
     var h = ""; try { h = new URL(u).hostname.toLowerCase(); } catch (e) {}
@@ -58,6 +58,11 @@
         tarj.filter(function(t){ return t.nota; }).map(function(t){ return '<p class="note" style="text-align:left;margin:2px 0 0;flex-basis:100%">' + I.esc(t.nombre) + ': ' + I.esc(t.nota) + '</p>'; }).join('');
     }
     $('rg-envio').hidden = !env; $('rg-envio-txt').textContent = env;
+    var hayIdeas = tr || tz || regalos.length || env;
+    $('rg-ideas').hidden = !hayIdeas; $('rg-libre').hidden = !!tx || !(hayIdeas || (tcorreo && tarj.length));
+    $('rg-ideas-tit').textContent = regalos.length ? "Ver ideas de regalo (" + regalos.length + ")" : "Ver ideas de regalo";
+    if (!abiertoUnaVez && regalos.some(function(g){ return g.mio; })) { $('rg-ideas').open = true; }
+    abiertoUnaVez = true;
     $('rg-nota').hidden = !(puede && regalos.length);
     $('rg-list').innerHTML = regalos.map(function(g){
       var link = safeLink(g.link), act;
