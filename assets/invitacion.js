@@ -60,7 +60,6 @@
     $('rg-envio').hidden = !env; $('rg-envio-txt').textContent = env;
     var hayIdeas = tr || tz || regalos.length || env;
     $('rg-ideas').hidden = !hayIdeas; $('rg-libre').hidden = !!tx || !(hayIdeas || (tcorreo && tarj.length));
-    $('rg-ideas-tit').textContent = regalos.length ? "Ver ideas de regalo (" + regalos.length + ")" : "Ver ideas de regalo";
     if (!abiertoUnaVez && regalos.some(function(g){ return g.mio; })) { $('rg-ideas').open = true; }
     abiertoUnaVez = true;
     $('rg-nota').hidden = !(puede && regalos.length);
