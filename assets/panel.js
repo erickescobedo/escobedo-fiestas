@@ -226,10 +226,10 @@
   });
 
   /* ---------- regalos ---------- */
-  function fillGiftText(){ if (!cfg) return; $('r-texto').value = cfg.regalos_texto || ""; $('r-ropa').value = cfg.talla_ropa || ""; $('r-zapato').value = cfg.talla_zapato || ""; }
+  function fillGiftText(){ if (!cfg) return; $('r-texto').value = cfg.regalos_texto || ""; $('r-ropa').value = cfg.talla_ropa || ""; $('r-zapato').value = cfg.talla_zapato || ""; $('r-envio').value = cfg.envio || ""; }
   $('r-guardar').addEventListener('click', function(){
     var st = $('r-st'); if (!partyId) { setStatus(st, "Primero crea la fiesta.", true); return; }
-    var v = { regalos_texto: $('r-texto').value.trim(), talla_ropa: $('r-ropa').value.trim(), talla_zapato: $('r-zapato').value.trim() };
+    var v = { regalos_texto: $('r-texto').value.trim(), talla_ropa: $('r-ropa').value.trim(), talla_zapato: $('r-zapato').value.trim(), envio: $('r-envio').value.trim() };
     setStatus(st, "Guardando…");
     sb.from('fiestas').update(v).eq('id', partyId).then(chk).then(function(){ cfg = Object.assign({}, cfg, v); setStatus(st, "Guardado. Los invitados ya lo ven."); })
       .catch(function(){ setStatus(st, "No se pudo guardar. Intenta de nuevo.", true); });

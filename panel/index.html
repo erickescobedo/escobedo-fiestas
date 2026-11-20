@@ -15,7 +15,7 @@
 <meta name="theme-color" content="#F4F1FA">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Gochi+Hand&family=Pacifico&family=Shantell+Sans:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
-<link rel="stylesheet" href="../assets/estilos.css?v=202611202200">
+<link rel="stylesheet" href="../assets/estilos.css?v=202611202300">
 <style>body{--bg:#F4F1FA;background-image:none}.check{display:flex;gap:10px;align-items:center;font-weight:700}.check input{width:22px;height:22px}</style>
 </head>
 <body>
@@ -114,8 +114,9 @@
         <label class="full">Texto <span class="opt">(opcional, ej. "Le encantan los animalitos y los libros con dibujos")</span><textarea id="r-texto" maxlength="400" rows="2"></textarea></label>
         <label>Talla de ropa<input type="text" id="r-ropa" maxlength="40" placeholder="Ej. 2T / 24 meses"></label>
         <label>Talla de zapato<input type="text" id="r-zapato" maxlength="40" placeholder="Ej. 13 mx"></label>
+        <label class="full">Dirección para envíos <span class="opt">(solo la ven las familias con su link; déjala vacía para no mostrarla)</span><textarea id="r-envio" maxlength="400" rows="4" placeholder="Nombre&#10;Calle y número, colonia&#10;Ciudad, estado, C.P.&#10;Tel."></textarea></label>
       </div>
-      <div class="btnrow"><button class="btn btn-blue btn-sm" type="button" id="r-guardar" style="background:var(--violet)">Guardar texto y tallas</button></div>
+      <div class="btnrow"><button class="btn btn-blue btn-sm" type="button" id="r-guardar" style="background:var(--violet)">Guardar texto, tallas y dirección</button></div>
       <p class="status" id="r-st" role="status"></p>
       <h3 style="margin:18px 0 8px">Lista de ideas</h3>
       <form class="mini" id="r-form" novalidate>
@@ -166,8 +167,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="../assets/config.js?v=202611202200"></script>
-<script src="../assets/temas.js?v=202611202200"></script>
-<script src="../assets/panel.js?v=202611202200"></script>
+<script src="../assets/config.js?v=202611202300"></script>
+<script src="../assets/temas.js?v=202611202300"></script>
+<script src="../assets/panel.js?v=202611202300"></script>
 </body>
 </html>

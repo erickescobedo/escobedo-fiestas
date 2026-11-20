@@ -11,7 +11,7 @@
 <meta name="theme-color" content="#FBF4E4">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Gochi+Hand&family=Pacifico&family=Shantell+Sans:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
-<link rel="stylesheet" href="assets/estilos.css?v=202611202200">
+<link rel="stylesheet" href="assets/estilos.css?v=202611202300">
 </head>
 <body class="inv">
 <div class="bg-doodles" data-bgdoodles="46" aria-hidden="true"></div>
@@ -70,6 +70,12 @@
     <ul class="rg-list" id="rg-list"></ul>
     <p class="note" id="rg-nota" hidden>Toca "Yo lo llevo" en lo que vayas a regalar para que no se repita. Nadie más ve quién lo lleva.</p>
     <p class="err" id="rg-err" hidden></p>
+    <div class="envio" id="rg-envio" hidden>
+      <b>¿Prefieres enviarlo a casa?</b>
+      <p id="rg-envio-txt"></p>
+      <button class="btn btn-ghost btn-sm" type="button" id="rg-copiar">Copiar dirección</button>
+      <p class="note" style="text-align:left">Si lo mandas, toca "Yo lo llevo" en el regalo para que no se repita.</p>
+    </div>
   </section>
   <div class="strip between" id="rg-strip" data-strip="7" aria-hidden="true" hidden></div>
 
@@ -81,8 +87,8 @@
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="assets/config.js?v=202611202200"></script>
-<script src="assets/temas.js?v=202611202200"></script>
-<script src="assets/invitacion.js?v=202611202200"></script>
+<script src="assets/config.js?v=202611202300"></script>
+<script src="assets/temas.js?v=202611202300"></script>
+<script src="assets/invitacion.js?v=202611202300"></script>
 </body>
 </html>

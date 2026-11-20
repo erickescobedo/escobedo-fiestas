@@ -49,7 +49,8 @@
     $('rg-tallas').hidden = !(tr || tz);
     $('rg-tallas').innerHTML = (tr ? '<div class="talla"><span class="lbl">Talla de ropa</span><span class="val">' + I.esc(tr) + '</span></div>' : '') +
       (tz ? '<div class="talla"><span class="lbl">Talla de zapato</span><span class="val">' + I.esc(tz) + '</span></div>' : '');
-    var puede = !!familia;
+    var puede = !!familia, env = puede ? (cfg.envio || "").trim() : "";
+    $('rg-envio').hidden = !env; $('rg-envio-txt').textContent = env;
     $('rg-nota').hidden = !(puede && regalos.length);
     $('rg-list').innerHTML = regalos.map(function(g){
       var link = safeLink(g.link), act;
@@ -72,6 +73,13 @@
       err.hidden = false; b.disabled = false;
       if (/alguien/.test(m)) sb.rpc('fiesta_publica', { p_codigo: code }).then(function(r){ if (r.data) { regalos = r.data.regalos || []; renderRegalos(); } });
     });
+  });
+
+  $('rg-copiar').addEventListener('click', function(){
+    var b = this, txt = (cfg && cfg.envio || "").trim(); if (!txt) return;
+    function ok(){ b.textContent = "¡Copiada!"; setTimeout(function(){ b.textContent = "Copiar dirección"; }, 2000); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, function(){ b.textContent = "Mantén presionada la dirección para copiarla"; });
+    else b.textContent = "Mantén presionada la dirección para copiarla";
   });
 
   $('g-cambiar').addEventListener('click', function(){ $('gracias').hidden = true; $('rsvp').hidden = false; });

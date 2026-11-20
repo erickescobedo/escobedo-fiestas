@@ -299,3 +299,7 @@ body.inv .bg-doodles>svg{opacity:.9}
 body.inv main.wrap,body.inv #card{gap:64px!important}
 body.inv{padding-top:calc(64px + env(safe-area-inset-top,0px));padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))}
 .fill-layer>svg,.bg-doodles>svg{position:absolute}
+.envio{margin-top:16px;padding:14px 16px;border:2px dashed rgba(34,53,127,.35);border-radius:225px 14px 205px 14px/14px 205px 14px 225px;display:grid;gap:6px;justify-items:start}
+.envio b{font-family:var(--marker);color:var(--navy);font-size:1.15rem}
+.envio p{margin:0;white-space:pre-line;font-weight:700;color:var(--navy);user-select:all}
+.envio .note{font-weight:600;color:var(--muted);user-select:auto}

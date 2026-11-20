@@ -93,7 +93,7 @@ $$;
 -- ───────────── Funciones públicas (invitados) ─────────────
 
 -- Datos de la fiesta actual. Con código: el nombre del invitado y su respuesta anterior.
--- OJO: 0003_regalos.sql la reemplaza con la versión que incluye regalos; si corres este archivo otra vez, corre 0003 después.
+-- OJO: 0003_regalos.sql y luego 0004_envio.sql la reemplazan; si corres este archivo otra vez, corre esos después.
 create or replace function panel.fiesta_publica(p_codigo text default null) returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
 declare f panel.fiestas; inv panel.fiesta_invitados; r panel.fiesta_rsvps; res jsonb;

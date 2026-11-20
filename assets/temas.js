@@ -127,7 +127,7 @@
   /* ---------- Relleno: dibujos en cada hueco libre, sin tocar letras, foto, botones ni campos ---------- */
   var tema = TEMAS.dibujitos, llenos = [], tmr = null, obsR = null, obsM = null;
   function TAM(){ return Math.round(Math.max(30, Math.min(40, window.innerWidth / 11))); }
-  var CAJAS = 'a,.btn,button,input,textarea,select,output,.seg label,.counter,.talla,.summary,.uline,.frame,.cloudbox,.sticker,.pin,.d-fecha svg,.big-age';
+  var CAJAS = 'a,.btn,button,input,textarea,select,output,.seg label,.counter,.talla,.envio,.summary,.uline,.frame,.cloudbox,.sticker,.pin,.d-fecha svg,.big-age';
   function uso(slot, x, y, sz){
     var parts = (tema.d[(slot * 7 + 3) % tema.d.length] || "").split(':'), c = sz / 2;
     return '<use href="#' + parts[0] + '" x="' + x + '" y="' + y + '" width="' + sz + '" height="' + sz + '"' + (parts[1] ? ' fill="' + parts[1] + '"' : '') +
@@ -215,7 +215,9 @@
       obsM.observe(root, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['hidden', 'class'] });
     }
   }
-  window.addEventListener('resize', pedir);
+  var anchoPrevio = window.innerWidth;
+  // En iPhone la barra del navegador cambia el alto al hacer scroll: solo se reacomoda si cambia el ancho.
+  window.addEventListener('resize', function(){ if (window.innerWidth !== anchoPrevio) { anchoPrevio = window.innerWidth; pedir(); } });
 
   window.Invit = { TEMAS: TEMAS, render: render, decorate: decorate, applyTheme: applyTheme, esc: esc, fechaLarga: fechaLarga, horario: horario,
     digits: digits, fmtTel: fmtTel, waNum: waNum, anos: anos, slug: slug };

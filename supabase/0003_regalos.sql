@@ -32,7 +32,7 @@ language sql stable security definer set search_path = '' as $$
 $$;
 revoke all on function panel.fiesta_regalos_lista(uuid, uuid) from public, anon, authenticated;
 
--- Datos de la fiesta actual (ahora con regalos).
+-- Datos de la fiesta actual (ahora con regalos). OJO: 0004_envio.sql la reemplaza; córrelo después.
 create or replace function panel.fiesta_publica(p_codigo text default null) returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
 declare f panel.fiestas; inv panel.fiesta_invitados; r panel.fiesta_rsvps; res jsonb;
