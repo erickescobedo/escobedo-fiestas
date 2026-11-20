@@ -236,7 +236,7 @@
   /* ---------- fiesta y temática ---------- */
   var SF = { nombre:'s-nombre', edad:'s-edad', fecha:'s-fecha', tel:'s-tel', ini:'s-ini', fin:'s-fin', lugar:'s-lugar', maps:'s-maps', kicker:'s-kicker', recordatorio_hora:'s-rech' };
   function newDraft(){
-    draft = { nombre: "", edad: 1, fecha: "", ini: "17:00", fin: "19:00", lugar: "", maps: "", tel: "8711038965", tema: "dibujitos", kicker: "Happy birthday, ¡estás invitado!", foto: "", recordatorio: true, recordatorio_hora: "10:30" };
+    draft = { nombre: "", edad: 1, fecha: "", ini: "17:00", fin: "19:00", lugar: "", maps: "", tel: "8711038965", tema: "dibujitos", kicker: "¡Están invitados!", foto: "", recordatorio: true, recordatorio_hora: "10:30" };
     paintSettings();
   }
   function fillSettings(){ if (!cfg || dirty) return; draft = Object.assign({}, cfg); paintSettings(); }

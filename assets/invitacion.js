@@ -49,6 +49,7 @@
     if (res.error || !res.data) throw res.error || new Error("sin fiesta");
     cfg = res.data;
     document.title = "Cumpleaños de " + cfg.nombre;
+    cfg.kicker = cfg.invitado ? "¡" + cfg.invitado + ", están invitados!" : "¡Están invitados!";
     I.render($('card'), cfg, document.documentElement);
     var meta = document.querySelector('meta[name=theme-color]'); if (meta) meta.content = (I.TEMAS[cfg.tema] || I.TEMAS.dibujitos).bg;
     $('loading').hidden = true; $('contacto').hidden = false;
