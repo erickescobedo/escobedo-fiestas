@@ -95,7 +95,11 @@
   }
   document.addEventListener('visibilitychange', function(){ if (!document.hidden && partyId) loadLists(); });
 
-  function loadLists(){
+  var ultimaFirma = "", pendiente = false;
+  function escribiendo(){ var a = document.activeElement; return !!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'checkbox' && $('app').contains(a)); }
+  function pintarListas(){ var y = window.scrollY; renderConf(); renderGuests(); renderRecInfo(); renderGifts(); if (Math.abs(window.scrollY - y) > 2) window.scrollTo(0, y); }
+  document.addEventListener('focusout', function(){ setTimeout(function(){ if (pendiente && !escribiendo()) { pendiente = false; ultimaFirma = JSON.stringify([rows, guests, msgs, gifts]); pintarListas(); } }, 250); });
+  function loadLists(forzar){
     var id = partyId;
     return Promise.all([
       sb.from('fiesta_rsvps').select('*').eq('fiesta_id', id),
@@ -104,8 +108,12 @@
       sb.from('fiesta_regalos').select('*').eq('fiesta_id', id).order('orden').order('creado_en')
     ]).then(function(r){
       if (id !== partyId) return;
-      rows = chk(r[0]); guests = chk(r[1]); msgs = chk(r[2]); gifts = chk(r[3]);
-      renderConf(); renderGuests(); renderRecInfo(); renderGifts();
+      var nuevo = [chk(r[0]), chk(r[1]), chk(r[2]), chk(r[3])], firma = JSON.stringify(nuevo);
+      rows = nuevo[0]; guests = nuevo[1]; msgs = nuevo[2]; gifts = nuevo[3];
+      if (firma === ultimaFirma && !forzar) return;
+      // Mientras escribes en el celular no se redibujan las listas: eso movía la pantalla. Se actualiza al terminar.
+      if (escribiendo() && !forzar) { pendiente = true; return; }
+      ultimaFirma = firma; pendiente = false; pintarListas();
     }).catch(function(){ setStatus($('conf-st'), "No se pudo actualizar la lista. Revisa tu internet.", true); });
   }
 
@@ -147,7 +155,7 @@
   }
   $('tabla').addEventListener('click', function(e){
     var b = e.target.closest('[data-del]'); if (!b) return;
-    twoStep(b, function(){ sb.from('fiesta_rsvps').delete().eq('id', b.dataset.del).then(chk).then(loadLists).catch(function(){ setStatus($('conf-st'), "No se pudo quitar.", true); }); });
+    twoStep(b, function(){ sb.from('fiesta_rsvps').delete().eq('id', b.dataset.del).then(chk).then(function(){ return loadLists(true); }).catch(function(){ setStatus($('conf-st'), "No se pudo quitar.", true); }); });
   });
   $('m-add').addEventListener('click', function(){
     var nombre = $('m-nombre').value.trim(), st = $('conf-st'), telRaw = $('m-tel').value.trim(), tel = telRaw ? I.waNum(telRaw) : null;
@@ -156,7 +164,7 @@
     var si = $('m-asiste').value === 'si';
     sb.from('fiesta_rsvps').insert({ fiesta_id: partyId, nombre: nombre, asiste: si, adultos: si ? Math.min(20, Math.max(0, +$('m-ad').value || 0)) : 0,
       ninos: si ? Math.min(20, Math.max(0, +$('m-ni').value || 0)) : 0, alergias: $('m-alergias').value.trim(), telefono: tel, origen: 'manual' })
-      .then(chk).then(function(){ setStatus(st, "Listo, agregué a " + nombre + "."); $('m-nombre').value = ''; $('m-alergias').value = ''; $('m-tel').value = ''; loadLists(); })
+      .then(chk).then(function(){ setStatus(st, "Listo, agregué a " + nombre + "."); $('m-nombre').value = ''; $('m-alergias').value = ''; $('m-tel').value = ''; loadLists(true); })
       .catch(function(){ setStatus(st, "No se pudo guardar.", true); });
   });
 
@@ -196,7 +204,7 @@
   function sendInvite(id){
     return sb.rpc('fiesta_enviar_invitacion', { p_invitado: id }).then(chk);
   }
-  function afterSend(){ loadLists(); setTimeout(function(){ sb.rpc('fiesta_revisar_mensajes').then(loadLists); }, 4000); setTimeout(function(){ sb.rpc('fiesta_revisar_mensajes').then(loadLists); }, 12000); }
+  function afterSend(){ loadLists(); setTimeout(function(){ sb.rpc('fiesta_revisar_mensajes').then(function(){ loadLists(); }); }, 4000); setTimeout(function(){ sb.rpc('fiesta_revisar_mensajes').then(function(){ loadLists(); }); }, 12000); }
   var editId = null;
   $('glist').addEventListener('click', function(e){
     var ed = e.target.closest('[data-gedit]');
@@ -211,7 +219,7 @@
       sv.disabled = true;
       sb.from('fiesta_invitados').update({ nombre: nombre, telefono: tel }).eq('id', id).then(chk)
         .then(function(){ return sb.from('fiesta_rsvps').update({ nombre: nombre, telefono: tel }).eq('invitado_id', id).then(chk); })
-        .then(function(){ editId = null; setStatus(st, "Guardado: " + nombre + "."); loadLists(); })
+        .then(function(){ editId = null; setStatus(st, "Guardado: " + nombre + "."); loadLists(true); })
         .catch(function(){ sv.disabled = false; setStatus(st, "No se pudo guardar. Intenta de nuevo.", true); });
       return;
     }
@@ -222,21 +230,24 @@
     if (c) { var g = guestById(c.dataset.copy), txt = g ? linkFor(g) : "";
       navigator.clipboard.writeText(txt).then(function(){ c.textContent = "Copiado"; }, function(){ setStatus($('g-st'), txt); }).then(function(){ setTimeout(function(){ c.textContent = "Copiar link"; }, 2000); }); return; }
     var d = e.target.closest('[data-gdel]');
-    if (d) twoStep(d, function(){ sb.from('fiesta_invitados').delete().eq('id', d.dataset.gdel).then(chk).then(loadLists).catch(function(){ setStatus($('g-st'), "No se pudo quitar.", true); }); });
+    if (d) twoStep(d, function(){ sb.from('fiesta_invitados').delete().eq('id', d.dataset.gdel).then(chk).then(function(){ return loadLists(true); }).catch(function(){ setStatus($('g-st'), "No se pudo quitar.", true); }); });
   });
   $('glist').addEventListener('keydown', function(e){
     if (e.key === 'Enter' && e.target.closest('.guest.editing')) { e.preventDefault(); var b = document.querySelector('[data-gsave]'); if (b) b.click(); }
     if (e.key === 'Escape' && editId) { editId = null; renderGuests(); }
   });
   $('enviar-todos').addEventListener('click', function(e){
-    var b = e.currentTarget;
+    var b = e.currentTarget, st = $('g-st');
     var faltan = guests.filter(function(g){ var m = lastInv(g); return !rsvpFor(g) && !m; });
-    if (!faltan.length) { setStatus($('g-st'), "A todos ya se les envió. Para reintentar uno con error, usa su botón.", false); return; }
-    twoStep(b, function(){
-      b.disabled = true; var ok = 0, bad = 0;
-      faltan.reduce(function(p, g){ return p.then(function(){ return sendInvite(g.id).then(function(){ ok++; }, function(){ bad++; }); }); }, Promise.resolve())
-        .then(function(){ b.disabled = false; setStatus($('g-st'), "Enviadas: " + ok + (bad ? ". No se pudieron enviar: " + bad + "." : "."), !!bad); afterSend(); });
-    }, "Toca otra vez: enviar a " + faltan.length);
+    if (!faltan.length) { setStatus(st, "A todos ya se les envió. Para reintentar uno con error, usa su botón.", false); return; }
+    var n = faltan.length;
+    if (!window.confirm("¿Enviar la invitación por WhatsApp a " + n + (n === 1 ? " familia" : " familias") + "?\n\nNo cierres esta pantalla hasta que termine.")) return;
+    b.disabled = true; var ok = 0, bad = 0, i = 0;
+    faltan.reduce(function(p, g){ return p.then(function(){
+      i++; b.textContent = "Enviando " + i + " de " + n + "…"; setStatus(st, "Enviando " + i + " de " + n + ": " + g.nombre + ". No cierres esta pantalla.");
+      return sendInvite(g.id).then(function(){ ok++; }, function(){ bad++; }).then(function(){ return loadLists(true); });
+    }); }, Promise.resolve())
+      .then(function(){ b.disabled = false; b.textContent = "Enviar a todos los que faltan"; setStatus(st, "Listo. Enviadas: " + ok + (bad ? ". No se pudieron enviar: " + bad + " (usa su botón para reintentar)." : "."), !!bad); afterSend(); });
   });
   $('g-form').addEventListener('submit', function(e){
     e.preventDefault();
@@ -246,7 +257,7 @@
     if (!tel) { setStatus(st, "El celular debe tener 10 dígitos.", true); $('g-tel').focus(); return; }
     if (guests.some(function(g){ return g.telefono === tel; })) { setStatus(st, "Ese número ya está dado de alta en esta fiesta.", true); return; }
     sb.from('fiesta_invitados').insert({ fiesta_id: partyId, nombre: nombre, telefono: tel }).then(chk)
-      .then(function(){ setStatus(st, nombre + " quedó dado de alta. Ya puedes enviarle la invitación."); $('g-nombre').value = ''; $('g-tel').value = ''; $('g-nombre').focus(); loadLists(); })
+      .then(function(){ setStatus(st, nombre + " quedó dado de alta. Ya puedes enviarle la invitación."); $('g-nombre').value = ''; $('g-tel').value = ''; $('g-nombre').focus({ preventScroll: true }); loadLists(true); })
       .catch(function(){ setStatus(st, "No se pudo guardar. Intenta de nuevo.", true); });
   });
 
@@ -279,15 +290,15 @@
     if (link && !/^https:\/\//i.test(link)) { if (/^[\w-]+(\.[\w-]+)+(\/|$)/.test(link)) link = "https://" + link; else { setStatus(st, "El link debe empezar con https://", true); return; } }
     var orden = gifts.reduce(function(m, g){ return Math.max(m, g.orden || 0); }, 0) + 1;
     sb.from('fiesta_regalos').insert({ fiesta_id: partyId, nombre: nombre, link: link, orden: orden }).then(chk)
-      .then(function(){ setStatus(st, "Agregué " + nombre + "."); $('r-nombre').value = ''; $('r-link').value = ''; $('r-nombre').focus(); loadLists(); })
+      .then(function(){ setStatus(st, "Agregué " + nombre + "."); $('r-nombre').value = ''; $('r-link').value = ''; $('r-nombre').focus({ preventScroll: true }); loadLists(true); })
       .catch(function(){ setStatus(st, "No se pudo guardar. Revisa el link e intenta de nuevo.", true); });
   });
   $('rlist').addEventListener('click', function(e){
     var st = $('r-lst'), fail = function(){ setStatus(st, "No se pudo hacer el cambio.", true); };
     var d = e.target.closest('[data-rdel]');
-    if (d) { twoStep(d, function(){ sb.from('fiesta_regalos').delete().eq('id', d.dataset.rdel).then(chk).then(loadLists).catch(fail); }); return; }
+    if (d) { twoStep(d, function(){ sb.from('fiesta_regalos').delete().eq('id', d.dataset.rdel).then(chk).then(function(){ return loadLists(true); }).catch(fail); }); return; }
     var f = e.target.closest('[data-rfree]');
-    if (f) { twoStep(f, function(){ sb.from('fiesta_regalos').update({ apartado_por: null, apartado_en: null }).eq('id', f.dataset.rfree).then(chk).then(loadLists).catch(fail); }, "¿Liberar?"); return; }
+    if (f) { twoStep(f, function(){ sb.from('fiesta_regalos').update({ apartado_por: null, apartado_en: null }).eq('id', f.dataset.rfree).then(chk).then(function(){ return loadLists(true); }).catch(fail); }, "¿Liberar?"); return; }
     var u = e.target.closest('[data-rup]');
     if (u) { var i = +u.dataset.rup, a = gifts[i - 1], b = gifts[i]; gifts[i - 1] = b; gifts[i] = a; renderGifts();
       Promise.all(gifts.map(function(g, k){ return g.orden === k + 1 ? null : sb.from('fiesta_regalos').update({ orden: k + 1 }).eq('id', g.id).then(chk); })).then(loadLists).catch(fail); }
