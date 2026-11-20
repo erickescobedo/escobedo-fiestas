@@ -30,6 +30,49 @@
     $('g-cal').hidden = !r.asiste; $('g-cal').href = calLink();
     if (scroll) window.scrollTo({ top: $('gracias').offsetTop - 20, behavior: 'smooth' });
   }
+  /* ---------- ideas de regalo ---------- */
+  var regalos = [];
+  function safeLink(u){ return /^https:\/\//i.test(u || "") ? u : ""; }
+  function tienda(u){
+    var h = ""; try { h = new URL(u).hostname.toLowerCase(); } catch (e) {}
+    var T = { amazon: "Amazon", amzn: "Amazon", liverpool: "Liverpool", mercadolibre: "Mercado Libre", meli: "Mercado Libre", walmart: "Walmart", sears: "Sears", coppel: "Coppel", elpalaciodehierro: "El Palacio de Hierro", shein: "Shein", zara: "Zara", hm: "H&M" };
+    var L = h.split("."); for (var k in T) if (L.indexOf(k) >= 0) return T[k];
+    return "la tienda";
+  }
+  function renderRegalos(){
+    var tx = (cfg.regalos_texto || "").trim(), tr = (cfg.talla_ropa || "").trim(), tz = (cfg.talla_zapato || "").trim();
+    var hay = tx || tr || tz || regalos.length;
+    $('regalos').hidden = !hay; $('g-regalos').hidden = !hay;
+    if (!hay) return;
+    $('rg-texto').hidden = !tx; $('rg-texto').textContent = tx;
+    $('rg-tallas').hidden = !(tr || tz);
+    $('rg-tallas').innerHTML = (tr ? '<div class="talla"><span class="lbl">Talla de ropa</span><span class="val">' + I.esc(tr) + '</span></div>' : '') +
+      (tz ? '<div class="talla"><span class="lbl">Talla de zapato</span><span class="val">' + I.esc(tz) + '</span></div>' : '');
+    var puede = !!familia;
+    $('rg-nota').hidden = !(puede && regalos.length);
+    $('rg-list').innerHTML = regalos.map(function(g){
+      var link = safeLink(g.link), act;
+      if (g.mio) act = '<span class="pill si">Lo llevas tú</span>' + (puede ? '<button class="x" type="button" data-rg="' + I.esc(g.id) + '" data-on="0">Ya no</button>' : '');
+      else if (g.apartado) act = '<span class="pill pend">Ya lo lleva alguien</span>';
+      else act = puede ? '<button class="btn btn-blue btn-sm" type="button" data-rg="' + I.esc(g.id) + '" data-on="1">Yo lo llevo</button>' : '';
+      return '<li class="rg' + (g.apartado && !g.mio ? ' tomado' : '') + (g.mio ? ' mio' : '') + '"><div class="rg-name"><b>' + I.esc(g.nombre) + '</b>' +
+        (link ? '<a href="' + I.esc(link) + '" target="_blank" rel="noopener noreferrer">Ver en ' + I.esc(tienda(link)) + '</a>' : '') + '</div><div class="rg-act">' + act + '</div></li>';
+    }).join('');
+  }
+  $('rg-list').addEventListener('click', function(e){
+    var b = e.target.closest('[data-rg]'); if (!b || !code) return;
+    var on = b.dataset.on === '1', err = $('rg-err'); err.hidden = true; b.disabled = true;
+    sb.rpc('fiesta_apartar_regalo', { p_codigo: code, p_regalo: b.dataset.rg, p_apartar: on }).then(function(res){
+      if (res.error) throw res.error;
+      regalos = res.data || []; renderRegalos();
+    }).catch(function(x){
+      var m = x && x.message || "";
+      err.textContent = /alguien/.test(m) ? "Alguien acaba de apartar ese regalo. Elige otro." : /5 regalos/.test(m) ? "Puedes apartar hasta 5 regalos." : "No se pudo guardar. Revisa tu internet e intenta otra vez.";
+      err.hidden = false; b.disabled = false;
+      if (/alguien/.test(m)) sb.rpc('fiesta_publica', { p_codigo: code }).then(function(r){ if (r.data) { regalos = r.data.regalos || []; renderRegalos(); } });
+    });
+  });
+
   $('g-cambiar').addEventListener('click', function(){ $('gracias').hidden = true; $('rsvp').hidden = false; });
 
   $('f').addEventListener('submit', function(e){
@@ -56,8 +99,9 @@
     $('loading').hidden = true; $('contacto').hidden = false;
     $('tel').textContent = I.fmtTel(cfg.tel);
     var wn = I.waNum(cfg.tel); $('tel-wa').hidden = !wn; if (wn) $('tel-wa').href = "https://wa.me/" + wn;
-    if (!cfg.invitado) { $('sin-codigo').hidden = false; return; }
-    familia = cfg.invitado;
+    regalos = cfg.regalos || [];
+    if (!cfg.invitado) { renderRegalos(); $('sin-codigo').hidden = false; return; }
+    familia = cfg.invitado; renderRegalos();
     $('saludo').textContent = "¡Hola, " + familia + "! Dinos si vienen y cuántos, y toca Confirmar.";
     $('nombre2').textContent = cfg.nombre; $('mensaje').placeholder = "¡Feliz cumple, " + cfg.nombre + "!";
     $('rsvp').hidden = false; refresh();

@@ -7,7 +7,7 @@
 <title>Panel de fiestas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Gochi+Hand&family=Nunito:wght@400;600;700;800&display=swap">
-<link rel="stylesheet" href="../assets/estilos.css?v=202611200012">
+<link rel="stylesheet" href="../assets/estilos.css?v=202611201200">
 <style>body{--bg:#F4F1FA;background-image:none}.check{display:flex;gap:10px;align-items:center;font-weight:700}.check input{width:22px;height:22px}</style>
 </head>
 <body>
@@ -44,6 +44,7 @@
     <nav class="tabs" role="tablist" aria-label="Secciones">
       <button role="tab" id="tab-conf" aria-controls="p-conf" aria-selected="true">Confirmaciones</button>
       <button role="tab" id="tab-inv" aria-controls="p-inv" aria-selected="false">Invitados</button>
+      <button role="tab" id="tab-reg" aria-controls="p-reg" aria-selected="false">Regalos</button>
       <button role="tab" id="tab-fiesta" aria-controls="p-fiesta" aria-selected="false">Datos de la fiesta</button>
     </nav>
 
@@ -93,6 +94,26 @@
       <div id="glist"></div>
     </section>
 
+    <section class="card pad" id="p-reg" role="tabpanel" aria-labelledby="tab-reg" hidden>
+      <h2>Ideas de regalo</h2>
+      <p class="sub">Esto sale en la invitación, abajo de la fecha y el lugar. Si lo dejas todo vacío, la sección no aparece. Cada familia puede tocar <b>Yo lo llevo</b> para que no se repitan; las demás solo ven "Ya lo lleva alguien" y aquí tú ves quién.</p>
+      <div class="mini">
+        <label class="full">Texto <span class="opt">(opcional, ej. "Le encantan los animalitos y los libros con dibujos")</span><textarea id="r-texto" maxlength="400" rows="2"></textarea></label>
+        <label>Talla de ropa<input type="text" id="r-ropa" maxlength="40" placeholder="Ej. 2T / 24 meses"></label>
+        <label>Talla de zapato<input type="text" id="r-zapato" maxlength="40" placeholder="Ej. 13 mx"></label>
+      </div>
+      <div class="btnrow"><button class="btn btn-blue btn-sm" type="button" id="r-guardar" style="background:var(--violet)">Guardar texto y tallas</button></div>
+      <p class="status" id="r-st" role="status"></p>
+      <h3 style="margin:18px 0 8px">Lista de ideas</h3>
+      <form class="mini" id="r-form" novalidate>
+        <input class="full" type="text" id="r-nombre" placeholder="Idea (ej. Rompecabezas de animales)" maxlength="80" autocomplete="off">
+        <input class="full" type="text" id="r-link" inputmode="url" placeholder="Link de la tienda (opcional, https://…)" autocomplete="off">
+        <button class="btn btn-blue full" id="r-add" type="submit" style="background:var(--violet)">Agregar idea</button>
+      </form>
+      <p class="status" id="r-lst" role="status"></p>
+      <div id="rlist"></div>
+    </section>
+
     <section class="card pad" id="p-fiesta" role="tabpanel" aria-labelledby="tab-fiesta" hidden>
       <div class="split">
         <div>
@@ -132,8 +153,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="../assets/config.js?v=202611200012"></script>
-<script src="../assets/temas.js?v=202611200012"></script>
-<script src="../assets/panel.js?v=202611200012"></script>
+<script src="../assets/config.js?v=202611201200"></script>
+<script src="../assets/temas.js?v=202611201200"></script>
+<script src="../assets/panel.js?v=202611201200"></script>
 </body>
 </html>

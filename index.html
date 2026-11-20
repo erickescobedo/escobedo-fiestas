@@ -11,13 +11,22 @@
 <meta name="theme-color" content="#EAF4FF">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Gochi+Hand&family=Nunito:wght@400;600;700;800&display=swap">
-<link rel="stylesheet" href="assets/estilos.css?v=202611200012">
+<link rel="stylesheet" href="assets/estilos.css?v=202611201200">
 </head>
 <body>
 <div class="bg-doodles" data-bgdoodles="46" aria-hidden="true"></div>
 <main class="wrap">
   <div id="card" class="wrap" style="gap:20px"></div>
   <p class="card loading" id="loading">Cargando invitación…</p>
+
+  <section class="card pad regalos" id="regalos" hidden aria-labelledby="rg-t">
+    <h2 id="rg-t">Ideas de regalo</h2>
+    <p class="sub" id="rg-texto" hidden></p>
+    <div class="tallas" id="rg-tallas" hidden></div>
+    <ul class="rg-list" id="rg-list"></ul>
+    <p class="note" id="rg-nota" hidden>Toca "Yo lo llevo" en lo que vayas a regalar para que no se repita. Nadie más ve quién lo lleva.</p>
+    <p class="err" id="rg-err" hidden></p>
+  </section>
 
   <div class="strip between" data-strip="7" aria-hidden="true"></div>
 
@@ -57,6 +66,7 @@
     <div class="summary" id="g-res"></div>
     <div class="btnrow" style="justify-content:center">
       <a class="btn btn-blue" id="g-cal" target="_blank" rel="noopener">Agregar a mi calendario</a>
+      <a class="btn btn-ghost" id="g-regalos" href="#regalos" hidden>Ver ideas de regalo</a>
       <button class="btn btn-ghost" id="g-cambiar" type="button">Cambiar mi respuesta</button>
     </div>
   </section>
@@ -71,8 +81,8 @@
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="assets/config.js?v=202611200012"></script>
-<script src="assets/temas.js?v=202611200012"></script>
-<script src="assets/invitacion.js?v=202611200012"></script>
+<script src="assets/config.js?v=202611201200"></script>
+<script src="assets/temas.js?v=202611201200"></script>
+<script src="assets/invitacion.js?v=202611201200"></script>
 </body>
 </html>

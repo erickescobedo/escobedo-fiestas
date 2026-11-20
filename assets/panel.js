@@ -6,7 +6,7 @@
   var SITE = String(C.SITE_URL).replace(/\/+$/, "");
   var LISTA = 'id,nombre,edad,fecha,ini,fin,lugar,maps,tel,tema,kicker,recordatorio,recordatorio_hora,creado_en';
 
-  var fiestas = [], actualId = null, partyId = null, cfg = null, rows = [], guests = [], msgs = [], timer = null, dirty = false, draft = {};
+  var fiestas = [], actualId = null, partyId = null, cfg = null, rows = [], guests = [], msgs = [], gifts = [], timer = null, dirty = false, draft = {};
 
   function setStatus(el, msg, bad){ el.textContent = msg; el.classList.toggle('bad', !!bad); }
   function hhmm(t){ return String(t || "").slice(0, 5); }
@@ -58,9 +58,9 @@
   });
 
   function selectParty(id){
-    partyId = id; rows = []; guests = []; msgs = []; dirty = false;
+    partyId = id; rows = []; guests = []; msgs = []; gifts = []; dirty = false;
     clearInterval(timer);
-    sb.from('fiestas').select('*').eq('id', id).single().then(chk).then(function(f){ cfg = norm(f); fillSettings(); renderRecInfo(); });
+    sb.from('fiestas').select('*').eq('id', id).single().then(chk).then(function(f){ cfg = norm(f); fillSettings(); renderRecInfo(); fillGiftText(); });
     loadLists(); timer = setInterval(function(){ if (!document.hidden) loadLists(); }, 20000);
     renderPick();
   }
@@ -71,16 +71,17 @@
     return Promise.all([
       sb.from('fiesta_rsvps').select('*').eq('fiesta_id', id),
       sb.from('fiesta_invitados').select('*').eq('fiesta_id', id),
-      sb.from('fiesta_mensajes').select('invitado_id,rsvp_id,tipo,estado,error,creado_en').eq('fiesta_id', id).order('creado_en', { ascending: false })
+      sb.from('fiesta_mensajes').select('invitado_id,rsvp_id,tipo,estado,error,creado_en').eq('fiesta_id', id).order('creado_en', { ascending: false }),
+      sb.from('fiesta_regalos').select('*').eq('fiesta_id', id).order('orden').order('creado_en')
     ]).then(function(r){
       if (id !== partyId) return;
-      rows = chk(r[0]); guests = chk(r[1]); msgs = chk(r[2]);
-      renderConf(); renderGuests(); renderRecInfo();
+      rows = chk(r[0]); guests = chk(r[1]); msgs = chk(r[2]); gifts = chk(r[3]);
+      renderConf(); renderGuests(); renderRecInfo(); renderGifts();
     }).catch(function(){ setStatus($('conf-st'), "No se pudo actualizar la lista. Revisa tu internet.", true); });
   }
 
   /* ---------- pestañas ---------- */
-  var TABS = ['conf', 'inv', 'fiesta'];
+  var TABS = ['conf', 'inv', 'reg', 'fiesta'];
   function tab(t){ TABS.forEach(function(o){ $('tab-' + o).setAttribute('aria-selected', String(o === t)); $('p-' + o).hidden = o !== t; }); if (t === 'fiesta') preview(); }
   TABS.forEach(function(t){ $('tab-' + t).addEventListener('click', function(){ tab(t); }); });
 
@@ -193,6 +194,49 @@
     sb.from('fiesta_invitados').insert({ fiesta_id: partyId, nombre: nombre, telefono: tel }).then(chk)
       .then(function(){ setStatus(st, nombre + " quedó dado de alta. Ya puedes enviarle la invitación."); $('g-nombre').value = ''; $('g-tel').value = ''; $('g-nombre').focus(); loadLists(); })
       .catch(function(){ setStatus(st, "No se pudo guardar. Intenta de nuevo.", true); });
+  });
+
+  /* ---------- regalos ---------- */
+  function fillGiftText(){ if (!cfg) return; $('r-texto').value = cfg.regalos_texto || ""; $('r-ropa').value = cfg.talla_ropa || ""; $('r-zapato').value = cfg.talla_zapato || ""; }
+  $('r-guardar').addEventListener('click', function(){
+    var st = $('r-st'); if (!partyId) { setStatus(st, "Primero crea la fiesta.", true); return; }
+    var v = { regalos_texto: $('r-texto').value.trim(), talla_ropa: $('r-ropa').value.trim(), talla_zapato: $('r-zapato').value.trim() };
+    setStatus(st, "Guardando…");
+    sb.from('fiestas').update(v).eq('id', partyId).then(chk).then(function(){ cfg = Object.assign({}, cfg, v); setStatus(st, "Guardado. Los invitados ya lo ven."); })
+      .catch(function(){ setStatus(st, "No se pudo guardar. Intenta de nuevo.", true); });
+  });
+  function renderGifts(){
+    if (!gifts.length) { $('rlist').innerHTML = '<p class="empty">Aún no hay ideas en la lista.</p>'; return; }
+    var tomados = gifts.filter(function(g){ return g.apartado_por; }).length;
+    $('rlist').innerHTML = '<p class="note" style="text-align:left;margin:0 0 8px">' + tomados + ' de ' + gifts.length + ' ya los lleva alguien.</p><ul class="rg-list rg-admin">' + gifts.map(function(g, i){
+      var who = g.apartado_por ? guestById(g.apartado_por) : null;
+      return '<li class="rg' + (g.apartado_por ? ' mio' : '') + '"><div class="rg-name"><b>' + esc(g.nombre) + '</b>' + (g.link ? '<a href="' + esc(g.link) + '" target="_blank" rel="noopener noreferrer">' + esc(g.link) + '</a>' : '') +
+        (g.apartado_por ? '<span>Lo lleva: <b>' + esc(who ? who.nombre : 'una familia') + '</b></span>' : '') + '</div><div class="rg-act">' +
+        (i > 0 ? '<button class="x" type="button" data-rup="' + i + '" aria-label="Subir">↑</button>' : '') +
+        (g.apartado_por ? '<button class="x" type="button" data-rfree="' + esc(g.id) + '">Liberar</button>' : '') +
+        '<button class="x" type="button" data-rdel="' + esc(g.id) + '">Quitar</button></div></li>';
+    }).join('') + '</ul>';
+  }
+  $('r-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    var st = $('r-lst'), nombre = $('r-nombre').value.trim(), link = $('r-link').value.trim();
+    if (!partyId) { setStatus(st, "Primero crea la fiesta.", true); return; }
+    if (!nombre) { setStatus(st, "Escribe la idea de regalo.", true); $('r-nombre').focus(); return; }
+    if (link && !/^https:\/\//i.test(link)) { if (/^[\w-]+(\.[\w-]+)+(\/|$)/.test(link)) link = "https://" + link; else { setStatus(st, "El link debe empezar con https://", true); return; } }
+    var orden = gifts.reduce(function(m, g){ return Math.max(m, g.orden || 0); }, 0) + 1;
+    sb.from('fiesta_regalos').insert({ fiesta_id: partyId, nombre: nombre, link: link, orden: orden }).then(chk)
+      .then(function(){ setStatus(st, "Agregué " + nombre + "."); $('r-nombre').value = ''; $('r-link').value = ''; $('r-nombre').focus(); loadLists(); })
+      .catch(function(){ setStatus(st, "No se pudo guardar. Revisa el link e intenta de nuevo.", true); });
+  });
+  $('rlist').addEventListener('click', function(e){
+    var st = $('r-lst'), fail = function(){ setStatus(st, "No se pudo hacer el cambio.", true); };
+    var d = e.target.closest('[data-rdel]');
+    if (d) { twoStep(d, function(){ sb.from('fiesta_regalos').delete().eq('id', d.dataset.rdel).then(chk).then(loadLists).catch(fail); }); return; }
+    var f = e.target.closest('[data-rfree]');
+    if (f) { twoStep(f, function(){ sb.from('fiesta_regalos').update({ apartado_por: null, apartado_en: null }).eq('id', f.dataset.rfree).then(chk).then(loadLists).catch(fail); }, "¿Liberar?"); return; }
+    var u = e.target.closest('[data-rup]');
+    if (u) { var i = +u.dataset.rup, a = gifts[i - 1], b = gifts[i]; gifts[i - 1] = b; gifts[i] = a; renderGifts();
+      Promise.all(gifts.map(function(g, k){ return g.orden === k + 1 ? null : sb.from('fiesta_regalos').update({ orden: k + 1 }).eq('id', g.id).then(chk); })).then(loadLists).catch(fail); }
   });
 
   /* ---------- PDF ---------- */
