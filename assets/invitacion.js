@@ -42,7 +42,7 @@
   function renderRegalos(){
     var tx = (cfg.regalos_texto || "").trim(), tr = (cfg.talla_ropa || "").trim(), tz = (cfg.talla_zapato || "").trim();
     var hay = tx || tr || tz || regalos.length;
-    $('regalos').hidden = !hay; $('g-regalos').hidden = !hay;
+    $('regalos').hidden = !hay; $('rg-strip').hidden = !hay; $('g-regalos').hidden = !hay;
     if (!hay) return;
     $('rg-texto').hidden = !tx; $('rg-texto').textContent = tx;
     $('rg-tallas').hidden = !(tr || tz);
