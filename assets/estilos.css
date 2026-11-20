@@ -164,3 +164,9 @@ details.manual{margin-top:14px} details.manual summary{cursor:pointer;font-weigh
   @keyframes bob{50%{translate:0 -5px}}
 }
 @media print{body{background:#fff}.no-print{display:none!important}}
+
+/* Contadores: caben lado a lado en celulares angostos */
+.counts{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.counter{padding:10px 6px;min-width:0}
+.step{gap:6px}
+.step button{width:38px;height:38px}

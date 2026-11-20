@@ -11,7 +11,7 @@
 <meta name="theme-color" content="#EAF4FF">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Gochi+Hand&family=Nunito:wght@400;600;700;800&display=swap">
-<link rel="stylesheet" href="assets/estilos.css">
+<link rel="stylesheet" href="assets/estilos.css?v=202611200009">
 </head>
 <body>
 <div class="bg-doodles" data-bgdoodles="46" aria-hidden="true"></div>
@@ -37,7 +37,9 @@
           <div class="counter c-ad"><span class="legend">Adultos</span><div class="step"><button type="button" data-k="ad" data-d="-1" aria-label="Quitar adulto">−</button><output id="ad">1</output><button type="button" data-k="ad" data-d="1" aria-label="Agregar adulto">+</button></div></div>
           <div class="counter c-ni"><span class="legend">Niños</span><div class="step"><button type="button" data-k="ni" data-d="-1" aria-label="Quitar niño">−</button><output id="ni">1</output><button type="button" data-k="ni" data-d="1" aria-label="Agregar niño">+</button></div></div>
         </div>
+        <div class="field"><label for="alergias">Alergias o restricciones de comida <span class="opt">(opcional)</span></label><input type="text" id="alergias" maxlength="200" placeholder="Ej. alergia al cacahuate, sin gluten"></div>
       </div>
+      <div class="field"><label for="mensaje">Un mensaje para <span id="nombre2"></span> <span class="opt">(opcional)</span></label><textarea id="mensaje" maxlength="500"></textarea></div>
       <p class="err" id="err" hidden></p>
       <button class="btn btn-blue btn-big" id="enviar" type="submit">Confirmar</button>
     </form>
@@ -69,8 +71,8 @@
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="assets/config.js"></script>
-<script src="assets/temas.js"></script>
-<script src="assets/invitacion.js"></script>
+<script src="assets/config.js?v=202611200009"></script>
+<script src="assets/temas.js?v=202611200009"></script>
+<script src="assets/invitacion.js?v=202611200009"></script>
 </body>
 </html>

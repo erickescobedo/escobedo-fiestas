@@ -25,7 +25,8 @@
     $('rsvp').hidden = true; $('gracias').hidden = false;
     $('g-tit').textContent = r.asiste ? "¡Gracias, nos vemos ahí!" : "¡Gracias por avisarnos!";
     $('g-sub').textContent = r.asiste ? "Ya quedó su confirmación. " + cfg.nombre + " los espera." : "Los vamos a extrañar. Ya quedó registrada su respuesta.";
-    $('g-res').innerHTML = "<div><b>" + I.esc(familia) + "</b></div><div>" + (r.asiste ? plural(r.adultos, "adulto", "adultos") + " y " + plural(r.ninos, "niño", "niños") : "No podrán ir") + "</div>";
+    $('g-res').innerHTML = "<div><b>" + I.esc(familia) + "</b></div><div>" + (r.asiste ? plural(r.adultos, "adulto", "adultos") + " y " + plural(r.ninos, "niño", "niños") : "No podrán ir") + "</div>" +
+      (r.asiste && r.alergias ? "<div>Alergias: " + I.esc(r.alergias) + "</div>" : "") + (r.mensaje ? "<div>Mensaje: " + I.esc(r.mensaje) + "</div>" : "");
     $('g-cal').hidden = !r.asiste; $('g-cal').href = calLink();
     if (scroll) window.scrollTo({ top: $('gracias').offsetTop - 20, behavior: 'smooth' });
   }
@@ -36,10 +37,10 @@
     var err = $('err'), si = asiste();
     if (si && counts.ad + counts.ni === 0) { err.textContent = "Indica cuántas personas vienen."; err.hidden = false; return; }
     err.hidden = true;
-    var r = { asiste: si, adultos: si ? counts.ad : 0, ninos: si ? counts.ni : 0 };
+    var r = { asiste: si, adultos: si ? counts.ad : 0, ninos: si ? counts.ni : 0, alergias: si ? $('alergias').value.trim() : "", mensaje: $('mensaje').value.trim() };
     var btn = $('enviar'); btn.disabled = true; btn.textContent = "Enviando…";
     sb.rpc('fiesta_confirmar', { p_codigo: code, p_nombre: familia, p_asiste: r.asiste, p_adultos: r.adultos, p_ninos: r.ninos,
-      p_alergias: "", p_mensaje: "", p_telefono: null })
+      p_alergias: r.alergias, p_mensaje: r.mensaje, p_telefono: null })
       .then(function(res){ if (res.error) throw res.error; showThanks(r, true); })
       .catch(function(){ err.textContent = "No se pudo enviar. Revisa tu internet e intenta otra vez."; err.hidden = false; })
       .then(function(){ btn.disabled = false; btn.textContent = "Confirmar"; });
@@ -58,11 +59,13 @@
     if (!cfg.invitado) { $('sin-codigo').hidden = false; return; }
     familia = cfg.invitado;
     $('saludo').textContent = "¡Hola, " + familia + "! Dinos si vienen y cuántos, y toca Confirmar.";
+    $('nombre2').textContent = cfg.nombre; $('mensaje').placeholder = "¡Feliz cumple, " + cfg.nombre + "!";
     $('rsvp').hidden = false; refresh();
     var prev = cfg.respuesta;
     if (prev) {
       $(prev.asiste ? 'asiste-si' : 'asiste-no').checked = true;
       if (prev.asiste) { counts.ad = prev.adultos; counts.ni = prev.ninos; }
+      $('alergias').value = prev.alergias || ""; $('mensaje').value = prev.mensaje || "";
       refresh(); showThanks(prev, false);
     }
   }).catch(function(){ $('loading').textContent = "No encontramos la invitación. Revisa el link o pregúntale a quien te la mandó."; });
