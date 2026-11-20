@@ -1,6 +1,7 @@
 -- Dirección para enviar regalos a casa. Solo la ven las familias con su link personal, nunca la página general.
 alter table panel.fiestas add column if not exists envio text not null default '' check (length(envio) <= 400);
 
+-- OJO: 0005_tallas_opcionales.sql la reemplaza; córrelo después.
 -- Datos de la fiesta actual. La dirección de envío solo va a familias con su link (código válido).
 create or replace function panel.fiesta_publica(p_codigo text default null) returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
