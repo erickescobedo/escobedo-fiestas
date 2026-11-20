@@ -1,0 +1,12 @@
+{
+  "name": "recordatorio_cumple",
+  "language": "es_MX",
+  "category": "UTILITY",
+  "components": [
+    { "type": "BODY",
+      "text": "¡Hola, {{1}}! Hoy es el cumpleaños de {{2}} 🎂\n\nGracias por confirmar. Los esperamos a las {{3}} en {{4}}. ¡Nos vemos ahí!",
+      "example": { "body_text": [["Sofía", "Eleonor", "5:00 pm", "Happy Time"]] } },
+    { "type": "BUTTONS",
+      "buttons": [ { "type": "URL", "text": "Ver ubicación", "url": "https://eleonor.escobedo.com.mx/?i={{1}}", "example": ["https://eleonor.escobedo.com.mx/?i=a1b2c3d4e5"] } ] }
+  ]
+}

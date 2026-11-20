@@ -1,0 +1,12 @@
+{
+  "name": "invitacion_cumple",
+  "language": "es_MX",
+  "category": "MARKETING",
+  "components": [
+    { "type": "BODY",
+      "text": "¡Hola, {{1}}! 🎉\n\n{{2}} cumple {{3}} y nos encantaría que nos acompañen a celebrar.\n\n📅 {{4}}\n🕔 {{5}}\n📍 {{6}}\n\nToca el botón para ver la invitación y confirmar en un solo paso.",
+      "example": { "body_text": [["Mamá de Sofía", "Eleonor", "2 años", "Jueves 26 de noviembre", "5:00 a 7:00 pm", "Happy Time"]] } },
+    { "type": "BUTTONS",
+      "buttons": [ { "type": "URL", "text": "Ver y confirmar", "url": "https://eleonor.escobedo.com.mx/?i={{1}}", "example": ["https://eleonor.escobedo.com.mx/?i=a1b2c3d4e5"] } ] }
+  ]
+}
