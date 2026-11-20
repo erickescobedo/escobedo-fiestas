@@ -266,3 +266,16 @@ body.inv{--ink:#22357F;--muted:#5B6390;--line:#D9D2C2;--soft:#FFFBF2;background-
 .title-row .side .dd{width:clamp(22px,7vw,44px);height:clamp(22px,7vw,44px)}
 .title-row .side .dd.s{width:clamp(18px,5.4vw,30px);height:clamp(18px,5.4vw,30px)}
 .hero h1{font-size:clamp(2.7rem,14.5vw,4.6rem)}
+
+/* Relleno de dibujos en cada hueco libre */
+.hero,.details{isolation:isolate}
+.fill-layer{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden;border-radius:inherit}
+.fill-layer .dd{position:absolute;animation:none!important}
+.hero h1 .cap{font-size:1.4em;line-height:0;display:inline-block;vertical-align:-.08em;padding-right:.02em;
+  background:var(--grain),linear-gradient(var(--navy),var(--navy));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+/* Nombre en tinta sólida (la textura se cortaba con la inicial grande) */
+.hero h1{background:none;-webkit-background-clip:border-box;background-clip:border-box;-webkit-text-fill-color:var(--navy);color:var(--navy)}
+.hero h1 .cap{background:none;-webkit-background-clip:border-box;background-clip:border-box;-webkit-text-fill-color:var(--navy);display:inline;line-height:1;vertical-align:baseline;font-size:1.38em}
+.title-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:0 4px}
+.hero h1{white-space:nowrap;font-size:clamp(2.3rem,12vw,4.4rem);padding:0 .06em}
+.big-age{font-size:clamp(5rem,24vw,8.2rem)}

@@ -38,10 +38,8 @@
       '<div class="strip top">' + top + '</div>' +
       '<p class="kicker" data-v="kicker"></p>' +
       '<div class="title-row">' +
-        '<div class="dcol side">' + dd(18) + dd(19, 1) + '</div>' +
         '<h1 id="inv-nombre" data-v="nombre"></h1>' +
         '<span class="big-age" aria-hidden="true" data-v="edad"></span>' +
-        '<div class="dcol side">' + dd(21, 1) + dd(22) + '</div>' +
       '</div>' +
       line('swoosh', '#64B5F6') +
       '<p class="tagline">¡Ven a celebrar mis <span data-v="edad2"></span> <span data-v="anos"></span>!</p>' +
@@ -107,7 +105,8 @@
     if (!el.querySelector('.hero')) el.insertAdjacentHTML('afterbegin', cardHTML());
     var q = function(k){ return el.querySelector('[data-v="' + k + '"]'); };
     q('kicker').textContent = cfg.kicker || "";
-    var h1 = q('nombre'); h1.textContent = cfg.nombre || "";
+    var h1 = q('nombre'), nm = cfg.nombre || ""; h1.textContent = ""; h1.setAttribute('aria-label', nm);
+    if (nm) { var cap = document.createElement('span'); cap.className = 'cap'; cap.textContent = nm.charAt(0); h1.appendChild(cap); h1.appendChild(document.createTextNode(nm.slice(1))); }
     q('edad').textContent = cfg.edad; q('edad2').textContent = cfg.edad; q('anos').textContent = anos(cfg.edad);
     q('frame').hidden = !cfg.foto; q('photorow').classList.toggle('nofoto', !cfg.foto);
     if (cfg.foto) { q('foto').src = cfg.foto; q('foto').alt = "Foto de " + cfg.nombre; }
@@ -117,7 +116,51 @@
     q('lugar').textContent = cfg.lugar || "";
     q('maps').hidden = !cfg.maps; if (cfg.maps) q('maps').href = cfg.maps;
     applyTheme(themeEl || el, cfg.tema);
+    var t = TEMAS[cfg.tema] || TEMAS.dibujitos;
+    llenar(el, t);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ llenar(el, t); });
+    if (!llenos.some(function(x){ return x.el === el; })) llenos.push({ el: el, t: t });
   }
+
+  /* Llena con dibujos todo hueco libre de la tarjeta (sin tocar letras, foto ni botones). */
+  function pintar(svg, t){
+    var parts = (t.d[((+svg.dataset.slot) * 7 + 3) % t.d.length] || "").split(':');
+    var u = svg.querySelector('use'); u.setAttribute('href', '#' + parts[0]); u.setAttribute('filter', 'url(#crayon)');
+    svg.style.fill = parts[1] || "";
+  }
+  function llenarCard(card, t){
+    var layer = card.querySelector(':scope > .fill-layer');
+    if (!layer) { layer = document.createElement('div'); layer.className = 'fill-layer'; layer.setAttribute('aria-hidden', 'true'); card.insertBefore(layer, card.firstChild); }
+    layer.innerHTML = "";
+    var cr = card.getBoundingClientRect(); if (!cr.width || !cr.height) return;
+    var obs = [];
+    function add(r, pad){ if (r.width && r.height) obs.push([r.left - cr.left - pad, r.top - cr.top - pad, r.right - cr.left + pad, r.bottom - cr.top + pad]); }
+    card.querySelectorAll('h1,p,span,.lbl,.val,b').forEach(function(e){
+      if (e.closest('.fill-layer') || e.closest('svg')) return;
+      var rg = document.createRange(); rg.selectNodeContents(e); Array.prototype.forEach.call(rg.getClientRects(), function(r){ add(r, 5); });
+    });
+    card.querySelectorAll('.big-age,a,.btn,button,input,textarea,label,output,.uline,.frame,.cloudbox,.sticker,.pin,.d-fecha svg,.strip .dd,.dcol .dd').forEach(function(e){ if (!e.closest('.fill-layer')) add(e.getBoundingClientRect(), 4); });
+    var W = cr.width, H = cr.height, IN = 15, seed = 11, slot = 500, html = "";
+    function rnd(){ seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+    function libre(b){ for (var i = 0; i < obs.length; i++) { var o = obs[i]; if (b[0] < o[2] && b[2] > o[0] && b[1] < o[3] && b[3] > o[1]) return false; } return true; }
+    for (var y = IN; y < H - IN - 16; y += 7) {
+      for (var x = IN; x < W - IN - 16; x += 7) {
+        var sz = Math.round(18 + rnd() * 18);
+        for (; sz >= 14; sz -= 3) {
+          var b = [x, y, x + sz, y + sz];
+          if (b[2] > W - IN || b[3] > H - IN || !libre(b)) continue;
+          obs.push([x - 3, y - 3, x + sz + 3, y + sz + 3]);
+          html += '<svg class="dd fd" data-slot="' + (slot++) + '" style="left:' + x + 'px;top:' + y + 'px;width:' + sz + 'px;height:' + sz + 'px;transform:rotate(' + Math.round(rnd() * 40 - 20) + 'deg)"><use></use></svg>';
+          break;
+        }
+      }
+    }
+    layer.innerHTML = html;
+    layer.querySelectorAll('.dd').forEach(function(svg){ pintar(svg, t); });
+  }
+  var llenos = [], tmr = null;
+  function llenar(el, t){ el.querySelectorAll('.hero,.details').forEach(function(c){ llenarCard(c, t); }); }
+  window.addEventListener('resize', function(){ clearTimeout(tmr); tmr = setTimeout(function(){ llenos.forEach(function(x){ llenar(x.el, x.t); }); }, 200); });
 
   window.Invit = { TEMAS: TEMAS, render: render, decorate: decorate, applyTheme: applyTheme, esc: esc, fechaLarga: fechaLarga, horario: horario,
     digits: digits, fmtTel: fmtTel, waNum: waNum, anos: anos, slug: slug };
