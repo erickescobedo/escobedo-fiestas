@@ -340,3 +340,14 @@ body.inv .bg-doodles>img{opacity:.9}
 .plegable[open]>summary::after{transform:translateY(2px) rotate(-135deg)}
 .plegable>.pl-body{padding:0 14px 14px}
 .plegable .rg-list{margin-top:0}
+
+/* mensaje plegable en confirmaciones del panel */
+details.msg{max-width:280px;color:var(--muted)}
+details.msg>summary{list-style:none;cursor:pointer;display:grid;gap:2px}
+details.msg>summary::-webkit-details-marker{display:none}
+details.msg .msg-ver{font-weight:800;font-size:.85rem;color:var(--violet);text-decoration:underline}
+details.msg[open] .msg-ini{display:none}
+details.msg[open] .msg-ver::before{content:"Ocultar mensaje";}
+details.msg[open] .msg-ver{font-size:0}
+details.msg[open] .msg-ver::before{font-size:.85rem}
+details.msg p{margin:4px 0 0;white-space:pre-line;overflow-wrap:anywhere}

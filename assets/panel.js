@@ -150,11 +150,18 @@
         return '<tr><td><b>' + esc(r.nombre) + '</b>' + (g && g.nombre !== r.nombre ? '<br><span style="color:var(--muted);font-size:.85rem">Invitado: ' + esc(g.nombre) + '</span>' : '') + '</td>' +
           '<td><span class="pill ' + (r.asiste ? 'si' : 'no') + '">' + (r.asiste ? 'Sí' : 'No') + '</span></td>' +
           '<td class="n">' + (r.asiste ? r.adultos : '–') + '</td><td class="n">' + (r.asiste ? r.ninos : '–') + '</td>' +
-          '<td>' + esc(r.alergias) + (r.alergias && r.mensaje ? '<br>' : '') + '<span style="color:var(--muted)">' + esc(r.mensaje) + '</span></td>' +
+          '<td>' + esc(r.alergias) + (r.alergias && r.mensaje ? '<br>' : '') + msgCelda(r) + '</td>' +
           '<td>' + rec + '</td>' +
           '<td><button class="x" type="button" data-del="' + esc(r.id) + '">Quitar</button></td></tr>';
       }).join('') + '</tbody></table></div>';
   }
+  var msgAbiertos = {};
+  function msgCelda(r){
+    var m = (r.mensaje || "").trim(); if (!m) return '';
+    if (m.length <= 45) return '<span style="color:var(--muted)">' + esc(m) + '</span>';
+    return '<details class="msg" data-msg="' + esc(r.id) + '"' + (msgAbiertos[r.id] ? ' open' : '') + '><summary><span class="msg-ini">' + esc(m.slice(0, 40).replace(/\s+\S*$/, '')) + '…</span><span class="msg-ver">Ver mensaje</span></summary><p>' + esc(m) + '</p></details>';
+  }
+  $('tabla').addEventListener('toggle', function(e){ var d = e.target; if (d.dataset && d.dataset.msg) msgAbiertos[d.dataset.msg] = d.open; }, true);
   $('tabla').addEventListener('click', function(e){
     var b = e.target.closest('[data-del]'); if (!b) return;
     twoStep(b, function(){ sb.from('fiesta_rsvps').delete().eq('id', b.dataset.del).then(chk).then(function(){ return loadLists(true); }).catch(function(){ setStatus($('conf-st'), "No se pudo quitar.", true); }); });
