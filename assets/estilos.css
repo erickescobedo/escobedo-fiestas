@@ -101,7 +101,7 @@ textarea{min-height:76px;resize:vertical}
 .step{display:flex;align-items:center;gap:10px}
 .step button{width:40px;height:40px;border-radius:50%;border:0;font:700 1.4rem var(--display);cursor:pointer;color:#fff;line-height:1}
 .step output{font:700 1.6rem var(--display);min-width:1.6em;text-align:center;font-variant-numeric:tabular-nums}
-.c-ad button{background:var(--c6)} .c-ni button{background:var(--c4)}
+.c-ad button{background:var(--c6)} .c-ni button{background:var(--c4)} .c-na button{background:var(--c4)}
 .err{color:var(--err);font-weight:700;font-size:.92rem;margin:-6px 0 12px}
 .note{font-size:.88rem;color:var(--muted);text-align:center;margin:10px 0 0}
 .status{font-size:.9rem;font-weight:700;color:var(--ok);min-height:1.4em;margin:8px 0 0}
@@ -217,7 +217,7 @@ body.inv{--ink:#22357F;--muted:#5B6390;--line:#D9D2C2;--soft:#FFFBF2;background-
 .inv .sub{color:var(--muted)}
 .inv .btn-blue,.preview .btn-blue{background:var(--navy);border-radius:255px 22px 225px 22px/22px 225px 22px 255px}
 .inv .seg label,.inv .counter,.inv .rg,.inv input[type=text],.inv textarea{border-radius:225px 14px 205px 14px/14px 205px 14px 225px}
-.inv .c-ad button{background:#B39DDB}.inv .c-ni button{background:#F48FB1}
+.inv .c-ad button{background:#B39DDB}.inv .c-ni button{background:#81C4E8}.inv .c-na button{background:#F48FB1}
 
 /* encabezado: nombre + 2 de arcoíris */
 .hero .kicker{font-family:var(--marker);font-weight:600;color:var(--navy);font-size:clamp(1.05rem,4.6vw,1.35rem);margin:0 6px}
@@ -351,3 +351,22 @@ details.msg[open] .msg-ver::before{content:"Ocultar mensaje";}
 details.msg[open] .msg-ver{font-size:0}
 details.msg[open] .msg-ver::before{font-size:.85rem}
 details.msg p{margin:4px 0 0;white-space:pre-line;overflow-wrap:anywhere}
+
+/* adultos / niños / niñas: tres contadores */
+.counts{grid-template-columns:repeat(3,minmax(0,1fr))}
+.counter{padding:10px 4px}
+
+.tot small{display:block;font-size:.7rem;color:var(--muted);font-weight:600;margin-top:2px}
+td .kd{font-size:.75rem;color:var(--muted);white-space:nowrap}
+.counts{gap:8px}
+.counts .step{gap:2px}
+.counts .step button{width:32px;height:32px;font-size:1.2rem;flex:none}
+.counts .step output{font-size:1.35rem;min-width:1.1em}
+.counts .step{display:grid;grid-template-columns:auto auto;grid-template-areas:"o o" "m p";gap:4px 10px;justify-items:center}
+.counts .step button:first-child{grid-area:m}
+.counts .step button:last-child{grid-area:p}
+.counts .step output{grid-area:o;font-size:1.6rem}
+.counts .step button{width:36px;height:36px}
+.counts .step{gap:2px 6px}
+.counts .step button{width:32px;height:32px}
+@media (max-width:360px){.counts .step{gap:2px 4px}.counts .step button{width:28px;height:28px;font-size:1.05rem}}

@@ -3,7 +3,7 @@
 alter table panel.fiestas add column if not exists tarjetas_correo text not null default '' check (length(tarjetas_correo) <= 120);
 alter table panel.fiestas add column if not exists tarjetas jsonb not null default '[]'::jsonb check (jsonb_typeof(tarjetas) = 'array' and jsonb_array_length(tarjetas) <= 6);
 
--- Datos de la fiesta actual (reemplaza la de 0005).
+-- Datos de la fiesta actual (reemplaza la de 0005). OJO: 0008_ninas.sql la reemplaza.
 create or replace function panel.fiesta_publica(p_codigo text default null) returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
 declare f panel.fiestas; inv panel.fiesta_invitados; r panel.fiesta_rsvps; res jsonb;

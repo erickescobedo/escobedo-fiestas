@@ -6,10 +6,10 @@
 
   var code = (new URLSearchParams(location.search).get('i') || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20);
   if (code === "general") code = "";
-  var cfg = null, familia = "", counts = { ad: 1, ni: 1 };
+  var cfg = null, familia = "", counts = { ad: 1, ni: 1, na: 0 };
 
   function asiste(){ return document.querySelector('input[name=asiste]:checked').value === 'si'; }
-  function refresh(){ $('ad').textContent = counts.ad; $('ni').textContent = counts.ni; $('quienes').hidden = !asiste(); }
+  function refresh(){ $('ad').textContent = counts.ad; $('ni').textContent = counts.ni; $('na').textContent = counts.na; $('quienes').hidden = !asiste(); }
   document.querySelectorAll('.step button').forEach(function(b){
     b.addEventListener('click', function(){ var k = b.dataset.k; counts[k] = Math.max(0, Math.min(20, counts[k] + Number(b.dataset.d))); refresh(); });
   });
@@ -21,11 +21,16 @@
       "&dates=" + d + "T" + a + "/" + d + "T" + b + "&ctz=America/Monterrey&location=" + encodeURIComponent(cfg.lugar + (cfg.maps ? " " + cfg.maps : ""));
   }
   function plural(n, s, p){ return n + " " + (n === 1 ? s : p); }
+  function ninosTxt(r){
+    if (r.ninas == null) return plural(r.ninos, "niño", "niños");
+    var h = r.ninos - r.ninas, m = r.ninas;
+    return plural(h, "niño", "niños") + " y " + plural(m, "niña", "niñas");
+  }
   function showThanks(r, scroll){
     $('rsvp').hidden = true; $('gracias').hidden = false;
     $('g-tit').textContent = r.asiste ? "¡Gracias, nos vemos ahí!" : "¡Gracias por avisarnos!";
     $('g-sub').textContent = r.asiste ? "Ya quedó su confirmación. " + cfg.nombre + " los espera." : "Los vamos a extrañar. Ya quedó registrada su respuesta.";
-    $('g-res').innerHTML = "<div><b>" + I.esc(familia) + "</b></div><div>" + (r.asiste ? plural(r.adultos, "adulto", "adultos") + " y " + plural(r.ninos, "niño", "niños") : "No podrán ir") + "</div>" +
+    $('g-res').innerHTML = "<div><b>" + I.esc(familia) + "</b></div><div>" + (r.asiste ? plural(r.adultos, "adulto", "adultos") + ", " + ninosTxt(r) : "No podrán ir") + "</div>" +
       (r.mensaje ? "<div>Mensaje: " + I.esc(r.mensaje) + "</div>" : "");
     $('g-cal').hidden = !r.asiste; $('g-cal').href = calLink();
     if (scroll) window.scrollTo({ top: $('gracias').offsetTop - 20, behavior: 'smooth' });
@@ -104,12 +109,12 @@
   $('f').addEventListener('submit', function(e){
     e.preventDefault();
     var err = $('err'), si = asiste();
-    if (si && counts.ad + counts.ni === 0) { err.textContent = "Indica cuántas personas vienen."; err.hidden = false; return; }
+    if (si && counts.ad + counts.ni + counts.na === 0) { err.textContent = "Indica cuántas personas vienen."; err.hidden = false; return; }
     err.hidden = true;
-    var r = { asiste: si, adultos: si ? counts.ad : 0, ninos: si ? counts.ni : 0, alergias: (cfg.respuesta && cfg.respuesta.alergias) || "", mensaje: $('mensaje').value.trim() };
+    var r = { asiste: si, adultos: si ? counts.ad : 0, ninos: si ? counts.ni + counts.na : 0, ninas: si ? counts.na : 0, alergias: (cfg.respuesta && cfg.respuesta.alergias) || "", mensaje: $('mensaje').value.trim() };
     var btn = $('enviar'); btn.disabled = true; btn.textContent = "Enviando…";
     sb.rpc('fiesta_confirmar', { p_codigo: code, p_nombre: familia, p_asiste: r.asiste, p_adultos: r.adultos, p_ninos: r.ninos,
-      p_alergias: r.alergias, p_mensaje: r.mensaje, p_telefono: null })
+      p_alergias: r.alergias, p_mensaje: r.mensaje, p_telefono: null, p_ninas: r.ninas })
       .then(function(res){ if (res.error) throw res.error; showThanks(r, true); })
       .catch(function(){ err.textContent = "No se pudo enviar. Revisa tu internet e intenta otra vez."; err.hidden = false; })
       .then(function(){ btn.disabled = false; btn.textContent = "Confirmar"; });
@@ -134,7 +139,7 @@
     var prev = cfg.respuesta;
     if (prev) {
       $(prev.asiste ? 'asiste-si' : 'asiste-no').checked = true;
-      if (prev.asiste) { counts.ad = prev.adultos; counts.ni = prev.ninos; }
+      if (prev.asiste) { counts.ad = prev.adultos; counts.na = prev.ninas || 0; counts.ni = prev.ninos - counts.na; }
       $('mensaje').value = prev.mensaje || "";
       refresh(); showThanks(prev, false);
     }

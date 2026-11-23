@@ -15,7 +15,7 @@
 <meta name="theme-color" content="#F4F1FA">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Gochi+Hand&family=Pacifico&family=Shantell+Sans:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
-<link rel="stylesheet" href="../assets/estilos.css?v=202611211000">
+<link rel="stylesheet" href="../assets/estilos.css?v=202611231230">
 <style>body{--bg:#F4F1FA;background-image:none}.check{display:flex;gap:10px;align-items:center;font-weight:700}.check input{width:22px;height:22px}</style>
 </head>
 <body>
@@ -68,7 +68,7 @@
       <div class="totals">
         <div class="tot"><b id="t-fam">0</b><span>Familias que vienen</span></div>
         <div class="tot"><b id="t-ad">0</b><span>Adultos</span></div>
-        <div class="tot"><b id="t-ni">0</b><span>Niños</span></div>
+        <div class="tot"><b id="t-ni">0</b><span>Niños y niñas</span><small id="t-ni-det"></small></div>
         <div class="tot"><b id="t-no">0</b><span>No vienen</span></div>
       </div>
       <p class="note" id="rec-info" style="text-align:left;margin:0 0 10px"></p>
@@ -83,6 +83,7 @@
           <input type="tel" id="m-tel" placeholder="Celular (para el recordatorio)">
           <label>Adultos<input type="number" id="m-ad" min="0" max="20" value="1"></label>
           <label>Niños<input type="number" id="m-ni" min="0" max="20" value="1"></label>
+          <label>Niñas<input type="number" id="m-na" min="0" max="20" value="0"></label>
           <input class="full" type="text" id="m-alergias" placeholder="Alergias" maxlength="200">
           <button class="btn btn-ghost full" id="m-add" type="button">Agregar</button>
         </div>
@@ -204,8 +205,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="../assets/config.js?v=202611211000"></script>
-<script src="../assets/temas.js?v=202611211000"></script>
-<script src="../assets/panel.js?v=202611211000"></script>
+<script src="../assets/config.js?v=202611231230"></script>
+<script src="../assets/temas.js?v=202611231230"></script>
+<script src="../assets/panel.js?v=202611231230"></script>
 </body>
 </html>

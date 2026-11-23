@@ -134,22 +134,32 @@
       ? "Recordatorio automático: el " + I.fechaLarga(cfg.fecha).toLowerCase() + " a las " + I.horario(cfg.recordatorio_hora, cfg.recordatorio_hora).split(' a ')[0] + " " + (cfg.recordatorio_hora < "12:00" ? "am" : "pm") + ", por WhatsApp, a " + conTel + " de " + yes + " familias que vienen (las que tienen celular)."
       : "El recordatorio automático está apagado (se activa en Datos de la fiesta).";
   }
+  function plural(n, s, p){ return n + " " + (n === 1 ? s : p); }
+  function ninosDet(r){
+    if (!r.ninos) return "";
+    if (r.ninas == null) return "Sin especificar";
+    var h = r.ninos - r.ninas, m = r.ninas;
+    return [h ? plural(h, "niño", "niños") : "", m ? plural(m, "niña", "niñas") : ""].filter(Boolean).join(", ");
+  }
   function renderConf(){
     var yes = rows.filter(function(r){ return r.asiste; });
     $('t-fam').textContent = yes.length;
     $('t-ad').textContent = yes.reduce(function(s,r){ return s + (r.adultos||0); }, 0);
     $('t-ni').textContent = yes.reduce(function(s,r){ return s + (r.ninos||0); }, 0);
+    var kh = 0, km = 0, ksd = 0;
+    yes.forEach(function(r){ if (!r.ninos) return; if (r.ninas == null) ksd += r.ninos; else { km += r.ninas; kh += r.ninos - r.ninas; } });
+    $('t-ni-det').textContent = [plural(kh, "niño", "niños"), plural(km, "niña", "niñas")].concat(ksd ? [ksd + " sin especificar"] : []).join(" · ");
     $('t-no').textContent = rows.length - yes.length;
     if (!rows.length) { $('tabla').innerHTML = '<p class="empty">Todavía no hay confirmaciones. Aparecerán aquí en cuanto alguien confirme.</p>'; return; }
     var sorted = rows.slice().sort(function(a,b){ return (b.asiste - a.asiste) || String(a.nombre).localeCompare(String(b.nombre), 'es'); });
-    $('tabla').innerHTML = '<div class="tablewrap"><table><thead><tr><th>Nombre</th><th>¿Viene?</th><th class="n">Adultos</th><th class="n">Niños</th><th>Alergias / mensaje</th><th>Recordatorio</th><th></th></tr></thead><tbody>' +
+    $('tabla').innerHTML = '<div class="tablewrap"><table><thead><tr><th>Nombre</th><th>¿Viene?</th><th class="n">Adultos</th><th class="n">Niños / niñas</th><th>Alergias / mensaje</th><th>Recordatorio</th><th></th></tr></thead><tbody>' +
       sorted.map(function(r){
         var g = r.invitado_id ? guestById(r.invitado_id) : null, m = recFor(r);
         var rec = !r.asiste ? '–' : !r.telefono ? '<span style="color:var(--muted)">Sin celular</span>' : !m ? '<span style="color:var(--muted)">Pendiente</span>'
           : m.estado === 'enviado' ? '<span class="pill si">Enviado</span>' : m.estado === 'error' ? '<span class="pill no" title="' + esc(m.error) + '">No se envió</span>' : '<span class="pill env">Enviando</span>';
         return '<tr><td><b>' + esc(r.nombre) + '</b>' + (g && g.nombre !== r.nombre ? '<br><span style="color:var(--muted);font-size:.85rem">Invitado: ' + esc(g.nombre) + '</span>' : '') + '</td>' +
           '<td><span class="pill ' + (r.asiste ? 'si' : 'no') + '">' + (r.asiste ? 'Sí' : 'No') + '</span></td>' +
-          '<td class="n">' + (r.asiste ? r.adultos : '–') + '</td><td class="n">' + (r.asiste ? r.ninos : '–') + '</td>' +
+          '<td class="n">' + (r.asiste ? r.adultos : '–') + '</td><td class="n">' + (r.asiste ? r.ninos + (r.ninos ? '<br><span class="kd">' + esc(ninosDet(r)) + '</span>' : '') : '–') + '</td>' +
           '<td>' + esc(r.alergias) + (r.alergias && r.mensaje ? '<br>' : '') + msgCelda(r) + '</td>' +
           '<td>' + rec + '</td>' +
           '<td><button class="x" type="button" data-del="' + esc(r.id) + '">Quitar</button></td></tr>';
@@ -172,7 +182,8 @@
     if (telRaw && !tel) { setStatus(st, "El celular debe tener 10 dígitos.", true); return; }
     var si = $('m-asiste').value === 'si';
     sb.from('fiesta_rsvps').insert({ fiesta_id: partyId, nombre: nombre, asiste: si, adultos: si ? Math.min(20, Math.max(0, +$('m-ad').value || 0)) : 0,
-      ninos: si ? Math.min(20, Math.max(0, +$('m-ni').value || 0)) : 0, alergias: $('m-alergias').value.trim(), telefono: tel, origen: 'manual' })
+      ninos: si ? Math.min(20, Math.max(0, +$('m-ni').value || 0) + Math.max(0, +$('m-na').value || 0)) : 0,
+      ninas: si ? Math.min(20, Math.max(0, +$('m-na').value || 0)) : 0, alergias: $('m-alergias').value.trim(), telefono: tel, origen: 'manual' })
       .then(chk).then(function(){ setStatus(st, "Listo, agregué a " + nombre + "."); $('m-nombre').value = ''; $('m-alergias').value = ''; $('m-tel').value = ''; loadLists(true); })
       .catch(function(){ setStatus(st, "No se pudo guardar.", true); });
   });
@@ -195,7 +206,7 @@
     function ord(g){ return rsvpFor(g) ? 2 : (lastInv(g) ? 1 : 0); }
     $('glist').innerHTML = '<div class="guests">' + guests.slice().sort(function(a,b){ return ord(a) - ord(b) || String(a.nombre).localeCompare(String(b.nombre), 'es'); }).map(function(g){
       var r = rsvpFor(g), m = lastInv(g), pill, btn = '';
-      if (r) pill = r.asiste ? '<span class="pill si">Viene · ' + r.adultos + ' ad, ' + r.ninos + ' niños</span>' : '<span class="pill no">No viene</span>';
+      if (r) pill = r.asiste ? '<span class="pill si">Viene · ' + r.adultos + ' ad' + (r.ninos ? ', ' + (r.ninas == null ? plural(r.ninos, 'niño', 'niños') : ninosDet(r)) : '') + '</span>' : '<span class="pill no">No viene</span>';
       else if (!m) pill = '<span class="pill pend">Sin enviar</span>';
       else if (m.estado === 'error') pill = '<span class="pill no" title="' + esc(m.error) + '">No se pudo enviar</span>';
       else pill = '<span class="pill env">' + (m.estado === 'enviado' ? 'Invitación enviada' : 'Enviando…') + '</span>';
@@ -501,18 +512,22 @@
     doc.setFont("helvetica", "normal"); doc.setFontSize(11); doc.setTextColor(122,102,112);
     doc.text(I.fechaLarga(c.fecha) + ", " + I.horario(c.ini, c.fin) + " · " + c.lugar, M, 76);
     doc.text("Lista al " + new Date().toLocaleDateString('es-MX', { day:'numeric', month:'long', year:'numeric' }), M, 92);
-    var boxes = [["Familias", yes.length], ["Adultos", ad], ["Niños", ni], ["Total personas", ad + ni]], bw = (W - 2*M - 30) / 4;
+    var boxes = [["Familias", yes.length], ["Adultos", ad], ["Niños y niñas", ni], ["Total personas", ad + ni]], bw = (W - 2*M - 30) / 4;
     boxes.forEach(function(b, i){ var x = M + i*(bw + 10); doc.setFillColor(248,245,252); doc.roundedRect(x, 108, bw, 54, 8, 8, 'F'); doc.setFont("helvetica","bold"); doc.setFontSize(20); doc.setTextColor(59,42,51); doc.text(String(b[1]), x + bw/2, 136, { align:'center' }); doc.setFont("helvetica","normal"); doc.setFontSize(9); doc.setTextColor(122,102,112); doc.text(b[0], x + bw/2, 152, { align:'center' }); });
-    var y = 192, cols = [{ h:"Nombre", x:M, w:170 }, { h:"Adultos", x:M + 180 }, { h:"Niños", x:M + 235 }, { h:"Alergias / notas", x:M + 290, w:W - M - (M + 290) }];
+    var kh = 0, km = 0, ksd = 0;
+    yes.forEach(function(r){ if (!r.ninos) return; if (r.ninas == null) ksd += r.ninos; else { km += r.ninas; kh += r.ninos - r.ninas; } });
+    doc.setFontSize(10); doc.setTextColor(122,102,112);
+    doc.text("Niños: " + kh + "   Niñas: " + km + (ksd ? "   Sin especificar: " + ksd + " (marcados con *)" : ""), M, 180);
+    var y = 206, cols = [{ h:"Nombre", x:M, w:150 }, { h:"Adultos", x:M + 160 }, { h:"Niños", x:M + 212 }, { h:"Niñas", x:M + 258 }, { h:"Alergias / notas", x:M + 305, w:W - M - (M + 305) }];
     function header(t){ if (y > H - 90) { doc.addPage(); y = 56; } doc.setFont("helvetica","bold"); doc.setFontSize(13); doc.setTextColor(59,42,51); doc.text(t, M, y); y += 18; doc.setFontSize(9); doc.setTextColor(122,102,112); cols.forEach(function(cc){ doc.text(cc.h.toUpperCase(), cc.x, y); }); y += 6; doc.setDrawColor(234,223,230); doc.line(M, y, W - M, y); y += 14; }
     function body(list, nums){
       doc.setFont("helvetica","normal"); doc.setFontSize(10.5); doc.setTextColor(59,42,51);
       list.forEach(function(r){
         var nota = [r.alergias ? "Alergias: " + r.alergias : "", r.mensaje || ""].filter(Boolean).join(" · ");
-        var nL = doc.splitTextToSize(String(r.nombre), cols[0].w), tL = doc.splitTextToSize(nota || "-", cols[3].w), h = Math.max(nL.length, tL.length) * 13 + 6;
+        var nL = doc.splitTextToSize(String(r.nombre), cols[0].w), tL = doc.splitTextToSize(nota || "-", cols[4].w), h = Math.max(nL.length, tL.length) * 13 + 6;
         if (y + h > H - 50) { doc.addPage(); y = 56; }
-        doc.text(nL, cols[0].x, y); if (nums) { doc.text(String(r.adultos||0), cols[1].x + 12, y); doc.text(String(r.ninos||0), cols[2].x + 10, y); }
-        doc.setTextColor(122,102,112); doc.text(tL, cols[3].x, y); doc.setTextColor(59,42,51); y += h; doc.setDrawColor(240,234,238); doc.line(M, y - 10, W - M, y - 10);
+        doc.text(nL, cols[0].x, y); if (nums) { doc.text(String(r.adultos||0), cols[1].x + 12, y); var sd = r.ninas == null && r.ninos; doc.text(sd ? r.ninos + "*" : String((r.ninos||0) - (r.ninas||0)), cols[2].x + 10, y); doc.text(sd ? "*" : String(r.ninas||0), cols[3].x + 10, y); }
+        doc.setTextColor(122,102,112); doc.text(tL, cols[4].x, y); doc.setTextColor(59,42,51); y += h; doc.setDrawColor(240,234,238); doc.line(M, y - 10, W - M, y - 10);
       });
       y += 14;
     }
