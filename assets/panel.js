@@ -162,8 +162,49 @@
           '<td class="n">' + (r.asiste ? r.adultos : '–') + '</td><td class="n">' + (r.asiste ? r.ninos + (r.ninos ? '<br><span class="kd">' + esc(ninosDet(r)) + '</span>' : '') : '–') + '</td>' +
           '<td>' + esc(r.alergias) + (r.alergias && r.mensaje ? '<br>' : '') + msgCelda(r) + '</td>' +
           '<td>' + rec + '</td>' +
-          '<td><button class="x" type="button" data-del="' + esc(r.id) + '">Quitar</button></td></tr>';
+          '<td style="white-space:nowrap"><button class="x" type="button" data-edit="' + esc(r.id) + '">Editar</button><button class="x" type="button" data-del="' + esc(r.id) + '">Quitar</button></td></tr>' +
+          (editando === r.id ? editFila(r) : '');
       }).join('') + '</tbody></table></div>';
+  }
+  /* Editar una confirmación desde el panel. El borrador se guarda al escribir para no perderlo si la lista se redibuja. */
+  var editando = null, borrador = {};
+  function telLocal(t){ t = String(t || ""); return (t.length === 12 && t.indexOf("52") === 0) ? t.slice(2) : t; }
+  function abrirEdicion(r){
+    editando = r.id;
+    borrador = { nombre: r.nombre || "", asiste: r.asiste ? "si" : "no", tel: telLocal(r.telefono), ad: r.adultos || 0,
+      na: r.ninas == null ? 0 : r.ninas, ni: (r.ninos || 0) - (r.ninas == null ? 0 : r.ninas), alergias: r.alergias || "", mensaje: r.mensaje || "", sinDet: r.ninas == null && r.ninos > 0 };
+  }
+  function editFila(r){
+    var b = borrador, v = function(k){ return esc(String(b[k])); };
+    return '<tr class="edit-row"><td colspan="7"><div class="mini editf">' +
+      '<label class="full">Nombre<input type="text" data-k="nombre" maxlength="80" value="' + v('nombre') + '"></label>' +
+      '<label>¿Viene?<select data-k="asiste"><option value="si"' + (b.asiste === 'si' ? ' selected' : '') + '>Sí asiste</option><option value="no"' + (b.asiste === 'no' ? ' selected' : '') + '>No asiste</option></select></label>' +
+      '<label>Celular<input type="tel" data-k="tel" placeholder="10 dígitos" value="' + v('tel') + '"></label>' +
+      '<label>Adultos<input type="number" data-k="ad" min="0" max="20" value="' + v('ad') + '"></label>' +
+      '<label>Niños<input type="number" data-k="ni" min="0" max="20" value="' + v('ni') + '"></label>' +
+      '<label>Niñas<input type="number" data-k="na" min="0" max="20" value="' + v('na') + '"></label>' +
+      (b.sinDet ? '<p class="full note" style="margin:0;text-align:left">Esta familia no dijo cuántos son niños y cuántos niñas: aparecen todos como niños. Corrígelo aquí.</p>' : '') +
+      '<label class="full">Alergias<input type="text" data-k="alergias" maxlength="200" value="' + v('alergias') + '"></label>' +
+      '<label class="full">Mensaje<textarea data-k="mensaje" maxlength="500" rows="3">' + esc(b.mensaje) + '</textarea></label>' +
+      '<div class="full btnrow" style="margin:0"><button class="btn btn-blue" type="button" data-guardar="' + esc(r.id) + '">Guardar cambios</button><button class="x" type="button" data-cancelar>Cancelar</button></div>' +
+      '<p class="full status" id="edit-st" role="status"></p>' +
+      '</div></td></tr>';
+  }
+  $('tabla').addEventListener('input', function(e){ var k = e.target.dataset && e.target.dataset.k; if (k && editando) borrador[k] = e.target.value; });
+  $('tabla').addEventListener('change', function(e){ var k = e.target.dataset && e.target.dataset.k; if (k && editando) borrador[k] = e.target.value; });
+  function guardarEdicion(id){
+    var b = borrador, st = $('edit-st'), nombre = String(b.nombre).trim(), telRaw = String(b.tel).trim(), tel = telRaw ? I.waNum(telRaw) : null;
+    if (!nombre) { setStatus(st, "Escribe el nombre.", true); return; }
+    if (telRaw && !tel) { setStatus(st, "El celular debe tener 10 dígitos.", true); return; }
+    var si = b.asiste === 'si', n = function(x){ return Math.min(20, Math.max(0, Math.floor(+x || 0))); };
+    var ad = si ? n(b.ad) : 0, ni = si ? n(b.ni) : 0, na = si ? n(b.na) : 0;
+    if (ni + na > 20) { setStatus(st, "Máximo 20 niños y niñas en total.", true); return; }
+    if (si && ad + ni + na === 0) { setStatus(st, "Si viene, pon al menos una persona.", true); return; }
+    setStatus(st, "Guardando…");
+    sb.from('fiesta_rsvps').update({ nombre: nombre, asiste: si, adultos: ad, ninos: ni + na, ninas: na, telefono: tel,
+      alergias: String(b.alergias).trim().slice(0, 200), mensaje: String(b.mensaje).trim().slice(0, 500), actualizado_en: new Date().toISOString() }).eq('id', id)
+      .then(chk).then(function(){ editando = null; setStatus($('conf-st'), "Listo, guardé los cambios de " + nombre + "."); return loadLists(true); })
+      .catch(function(){ setStatus($('edit-st'), "No se pudo guardar. Revisa tu internet.", true); });
   }
   var msgAbiertos = {};
   function msgCelda(r){
@@ -173,6 +214,10 @@
   }
   $('tabla').addEventListener('toggle', function(e){ var d = e.target; if (d.dataset && d.dataset.msg) msgAbiertos[d.dataset.msg] = d.open; }, true);
   $('tabla').addEventListener('click', function(e){
+    var ed = e.target.closest('[data-edit]');
+    if (ed) { var r = rows.find(function(x){ return x.id === ed.dataset.edit; }); if (!r) return; if (editando === r.id) editando = null; else abrirEdicion(r); renderConf(); return; }
+    if (e.target.closest('[data-cancelar]')) { editando = null; renderConf(); return; }
+    var gu = e.target.closest('[data-guardar]'); if (gu) { guardarEdicion(gu.dataset.guardar); return; }
     var b = e.target.closest('[data-del]'); if (!b) return;
     twoStep(b, function(){ sb.from('fiesta_rsvps').delete().eq('id', b.dataset.del).then(chk).then(function(){ return loadLists(true); }).catch(function(){ setStatus($('conf-st'), "No se pudo quitar.", true); }); });
   });

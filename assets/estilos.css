@@ -370,3 +370,10 @@ td .kd{font-size:.75rem;color:var(--muted);white-space:nowrap}
 .counts .step{gap:2px 6px}
 .counts .step button{width:32px;height:32px}
 @media (max-width:360px){.counts .step{gap:2px 4px}.counts .step button{width:28px;height:28px;font-size:1.05rem}}
+
+/* Editar confirmación en el panel */
+tr.edit-row td{background:#FBF7FD;padding:12px}
+.editf textarea{padding:10px 12px;border-radius:12px}
+.editf .btnrow{display:flex;gap:10px;align-items:center;justify-content:flex-start}
+.editf{position:sticky;left:12px;width:min(560px,calc(100vw - 100px))}
+#app>*{min-width:0}
