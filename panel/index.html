@@ -15,7 +15,7 @@
 <meta name="theme-color" content="#F4F1FA">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Gochi+Hand&family=Pacifico&family=Shantell+Sans:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
-<link rel="stylesheet" href="../assets/estilos.css?v=202611231400">
+<link rel="stylesheet" href="../assets/estilos.css?v=202611262230">
 <style>body{--bg:#F4F1FA;background-image:none}.check{display:flex;gap:10px;align-items:center;font-weight:700}.check input{width:22px;height:22px}</style>
 </head>
 <body>
@@ -44,10 +44,45 @@
         <span class="pill si" id="es-actual" hidden>Es la que ven los invitados</span>
         <button class="btn btn-ghost btn-sm" id="hacer-actual" type="button" hidden>Mostrar esta a los invitados</button>
         <a class="btn btn-ghost btn-sm" href="../" target="_blank" rel="noopener">Ver invitación</a>
+        <button class="btn btn-ghost btn-sm" id="nueva-btn" type="button">+ Nueva fiesta</button>
         <button class="btn btn-ghost btn-sm" id="salir" type="button">Salir</button>
       </div>
     </header>
     <p class="status" id="top-st" role="status" style="margin:0"></p>
+    <section class="card pad" id="p-nueva" hidden aria-labelledby="n-tit">
+      <h2 id="n-tit">Nueva fiesta</h2>
+      <p class="sub">Para el siguiente cumpleaños. Empieza con los datos de una fiesta anterior; las anteriores se guardan y las puedes comparar en Historial.</p>
+      <div class="mini">
+        <label class="full">Basada en<select id="n-base"></select></label>
+        <label>Nombre<input type="text" id="n-nombre" maxlength="40"></label>
+        <label>Cumple (años)<input type="number" id="n-edad" min="1" max="99"></label>
+        <label>Fecha<input type="date" id="n-fecha"></label>
+        <label>Teléfono de contacto<input type="tel" id="n-tel"></label>
+        <label>Empieza<input type="time" id="n-ini"></label>
+        <label>Termina<input type="time" id="n-fin"></label>
+        <label class="full">Lugar<input type="text" id="n-lugar" maxlength="80"></label>
+        <label class="full">Link de Google Maps <span class="opt">(opcional)</span><input type="text" id="n-maps" inputmode="url"></label>
+      </div>
+      <div class="field" style="margin-top:16px"><span class="legend">Lista de familias</span>
+        <label class="check"><input type="radio" name="n-inv" value="vinieron" checked><span id="n-inv-v">Solo las que vinieron</span></label>
+        <label class="check"><input type="radio" name="n-inv" value="todos"><span id="n-inv-t">Toda la lista</span></label>
+        <label class="check"><input type="radio" name="n-inv" value="ninguno">Empezar sin lista</label>
+        <p class="note" style="text-align:left;margin:4px 0 0">Cada familia recibe un link nuevo. No se manda nada hasta que tú envíes las invitaciones.</p>
+      </div>
+      <div class="field"><span class="legend">Regalos</span>
+        <label class="check"><input type="checkbox" id="n-reg"><span id="n-reg-t">Copiar las ideas de regalo (sin apartar)</span></label>
+        <p class="note" style="text-align:left;margin:4px 0 0">El texto de regalos, la dirección de envío y las tarjetas se copian. Las tallas no, porque cambian cada año.</p>
+      </div>
+      <div class="field"><span class="legend">Invitación</span>
+        <label class="check"><input type="checkbox" id="n-actual">Mostrar esta fiesta a los invitados desde ya</label>
+        <p class="note" style="text-align:left;margin:4px 0 0">Si no lo marcas, la invitación de ahora sigue igual. Cuando quieras, elige la nueva arriba y toca "Mostrar esta a los invitados".</p>
+      </div>
+      <div class="btnrow">
+        <button class="btn btn-blue" type="button" id="n-crear" style="background:var(--violet)">Crear fiesta</button>
+        <button class="btn btn-ghost" type="button" id="n-cancelar">Cancelar</button>
+      </div>
+      <p class="status" id="n-st" role="status"></p>
+    </section>
     <div class="card pad instalar" id="instalar" hidden>
       <div><b>Para no tener que volver a entrar</b>
         <p id="instalar-txt" style="margin:4px 0 0"></p></div>
@@ -59,6 +94,7 @@
       <button role="tab" id="tab-inv" aria-controls="p-inv" aria-selected="false">Invitados</button>
       <button role="tab" id="tab-reg" aria-controls="p-reg" aria-selected="false">Regalos</button>
       <button role="tab" id="tab-gas" aria-controls="p-gas" aria-selected="false">Gastos</button>
+      <button role="tab" id="tab-hist" aria-controls="p-hist" aria-selected="false">Historial</button>
       <button role="tab" id="tab-fiesta" aria-controls="p-fiesta" aria-selected="false">Datos de la fiesta</button>
     </nav>
 
@@ -166,6 +202,16 @@
       <div id="gs-list"></div>
     </section>
 
+    <section class="card pad" id="p-hist" role="tabpanel" aria-labelledby="tab-hist" hidden>
+      <h2>Historial</h2>
+      <p class="sub">Todas las fiestas, para comparar año con año y ver qué familias han venido.</p>
+      <p class="status" id="h-st" role="status"></p>
+      <div id="h-anios"></div>
+      <h3 style="margin:22px 0 6px">Familias</h3>
+      <input type="text" id="h-buscar" placeholder="Buscar familia" style="max-width:320px;margin-bottom:10px">
+      <div id="h-fam"></div>
+    </section>
+
     <section class="card pad" id="p-fiesta" role="tabpanel" aria-labelledby="tab-fiesta" hidden>
       <div class="split">
         <div>
@@ -191,10 +237,9 @@
           </div>
           <div class="btnrow">
             <button class="btn btn-blue" type="button" id="s-guardar" style="background:var(--violet)">Guardar cambios</button>
-            <button class="btn btn-ghost" type="button" id="s-nueva">Crear fiesta nueva con estos datos</button>
             <button class="btn btn-ghost" type="button" id="s-descartar">Descartar</button>
           </div>
-          <p class="note" style="text-align:left">"Guardar cambios" corrige la fiesta seleccionada. "Crear fiesta nueva" es para el siguiente cumpleaños: empieza con listas vacías, queda como la que ven los invitados y las anteriores se conservan.</p>
+          <p class="note" style="text-align:left">"Guardar cambios" corrige la fiesta seleccionada. Para el siguiente cumpleaños usa "+ Nueva fiesta" arriba.</p>
           <p class="status" id="s-st" role="status"></p>
         </div>
         <div class="preview" id="preview" aria-label="Vista previa"><div id="prev-card" class="wrap" style="gap:14px"></div></div>
@@ -205,8 +250,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="../assets/config.js?v=202611231400"></script>
-<script src="../assets/temas.js?v=202611231400"></script>
-<script src="../assets/panel.js?v=202611231400"></script>
+<script src="../assets/config.js?v=202611262230"></script>
+<script src="../assets/temas.js?v=202611262230"></script>
+<script src="../assets/panel.js?v=202611262230"></script>
 </body>
 </html>

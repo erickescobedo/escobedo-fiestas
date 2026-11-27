@@ -377,3 +377,6 @@ tr.edit-row td{background:#FBF7FD;padding:12px}
 .editf .btnrow{display:flex;gap:10px;align-items:center;justify-content:flex-start}
 .editf{position:sticky;left:12px;width:min(560px,calc(100vw - 100px))}
 #app>*{min-width:0}
+#p-nueva .check{display:flex;gap:8px;align-items:center;font-weight:600;margin:6px 0;cursor:pointer}
+#p-nueva .check input{width:auto;margin:0}
+#p-nueva .check input:disabled+span{color:var(--muted)}

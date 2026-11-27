@@ -69,7 +69,7 @@
       .then(function(r){
         fiestas = chk(r[0]).map(norm); actualId = (chk(r[1]) || {}).fiesta_id || null;
         $('cargando').hidden = true; $('app').hidden = false;
-        if (!fiestas.length) { cfg = null; newDraft(); tab('fiesta'); setStatus($('s-st'), "Todavía no hay fiestas. Llena los datos y toca Crear fiesta nueva."); renderPick(); return; }
+        if (!fiestas.length) { cfg = null; newDraft(); renderPick(); abrirNueva(); setStatus($('n-st'), "Todavía no hay fiestas. Llena los datos y toca Crear fiesta."); return; }
         selectParty(partyId && fiestas.some(function(f){ return f.id === partyId; }) ? partyId : (actualId || fiestas[0].id));
       })
       .catch(function(){ $('cargando').textContent = "Esta cuenta no tiene acceso al panel, o no hay internet. Recarga la página para intentar de nuevo."; });
@@ -120,8 +120,8 @@
   }
 
   /* ---------- pestañas ---------- */
-  var TABS = ['conf', 'inv', 'reg', 'gas', 'fiesta'];
-  function tab(t){ TABS.forEach(function(o){ $('tab-' + o).setAttribute('aria-selected', String(o === t)); $('p-' + o).hidden = o !== t; }); if (t === 'fiesta') preview(); }
+  var TABS = ['conf', 'inv', 'reg', 'gas', 'hist', 'fiesta'];
+  function tab(t){ TABS.forEach(function(o){ $('tab-' + o).setAttribute('aria-selected', String(o === t)); $('p-' + o).hidden = o !== t; }); if (t === 'fiesta') preview(); if (t === 'hist') cargarHist(); }
   TABS.forEach(function(t){ $('tab-' + t).addEventListener('click', function(){ tab(t); }); });
 
   /* ---------- confirmaciones ---------- */
@@ -646,14 +646,101 @@
       renderPick(); renderRecInfo(); setStatus(st, "Guardado. Los invitados ya ven los cambios.");
     }).catch(function(){ setStatus(st, "No se pudo guardar. Si subiste una foto muy grande, prueba con otra.", true); });
   });
-  $('s-nueva').addEventListener('click', function(e){
-    var b = e.currentTarget, st = $('s-st'); readSettings(); var bad = validate(draft); if (bad) { setStatus(st, bad, true); return; }
-    twoStep(b, function(){
-      setStatus(st, "Creando…");
-      sb.from('fiestas').insert(clean(draft)).select('id').single().then(chk).then(function(row){
-        return sb.from('fiesta_actual').update({ fiesta_id: row.id }).eq('id', true).then(chk).then(function(){ return row.id; });
-      }).then(function(id){ dirty = false; partyId = id; setStatus(st, "Fiesta creada. Ya es la que ven los invitados."); boot(); })
-        .catch(function(){ setStatus(st, "No se pudo crear. Intenta de nuevo.", true); });
-    }, "Toca otra vez para crearla");
+
+  /* ---------- nueva fiesta (siguiente cumpleaños) ---------- */
+  function masUnAnio(f){ var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(f || ""); if (!m) return ""; var d = +m[3]; if (m[2] === '02' && d === 29) d = 28; return (+m[1] + 1) + '-' + m[2] + '-' + String(d).padStart(2, '0'); }
+  var NF = { nombre:'n-nombre', edad:'n-edad', fecha:'n-fecha', tel:'n-tel', ini:'n-ini', fin:'n-fin', lugar:'n-lugar', maps:'n-maps' }, nBase = null;
+  function abrirNueva(){
+    $('n-base').innerHTML = fiestas.length ? fiestas.map(function(f){ return '<option value="' + esc(f.id) + '"' + (f.id === partyId ? ' selected' : '') + '>' + esc(f.nombre) + ' · ' + esc(I.fechaLarga(f.fecha)) + '</option>'; }).join('') : '<option value="">Ninguna (empezar de cero)</option>';
+    $('n-base').disabled = !fiestas.length;
+    llenarNueva(); $('p-nueva').hidden = false; setStatus($('n-st'), ""); $('p-nueva').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function llenarNueva(){
+    var b = fiestas.find(function(f){ return f.id === $('n-base').value; }) || null; nBase = b;
+    var d = b ? { nombre: b.nombre, edad: (+b.edad || 0) + 1, fecha: masUnAnio(b.fecha), tel: b.tel, ini: b.ini, fin: b.fin, lugar: b.lugar, maps: b.maps } : { nombre: "", edad: 1, fecha: "", tel: "", ini: "17:00", fin: "19:00", lugar: "", maps: "" };
+    Object.keys(NF).forEach(function(k){ $(NF[k]).value = k === 'tel' ? I.fmtTel(d[k] || "") : (d[k] == null ? "" : d[k]); });
+    $('n-actual').checked = !b || b.fecha < hoy() || !fiestas.some(function(f){ return f.id === actualId; });
+    var radios = document.querySelectorAll('input[name=n-inv]');
+    radios.forEach(function(r){ r.disabled = !b; }); if (!b) radios[2].checked = true;
+    $('n-reg').disabled = !b; $('n-reg').checked = false;
+    $('n-inv-v').textContent = "Solo las que vinieron"; $('n-inv-t').textContent = "Toda la lista"; $('n-reg-t').textContent = "Copiar las ideas de regalo (sin apartar)";
+    if (!b) return;
+    Promise.all([sb.from('fiesta_invitados').select('id,telefono').eq('fiesta_id', b.id), sb.from('fiesta_rsvps').select('invitado_id,telefono,asiste').eq('fiesta_id', b.id), sb.from('fiesta_regalos').select('id').eq('fiesta_id', b.id)])
+      .then(function(r){
+        if (nBase !== b) return;
+        var inv = chk(r[0]), rs = chk(r[1]), reg = chk(r[2]), tels = {}, telsV = {};
+        inv.forEach(function(i){ tels[i.telefono] = 1; if (rs.some(function(x){ return x.invitado_id === i.id && x.asiste; })) telsV[i.telefono] = 1; });
+        rs.forEach(function(x){ if (!x.invitado_id && x.telefono) { tels[x.telefono] = 1; if (x.asiste) telsV[x.telefono] = 1; } });
+        var nt = Object.keys(tels).length, nv = Object.keys(telsV).length;
+        $('n-inv-v').textContent = "Solo las que vinieron (" + plural(nv, "familia", "familias") + ")";
+        $('n-inv-t').textContent = "Toda la lista (" + plural(nt, "familia", "familias") + ")";
+        $('n-reg-t').textContent = "Copiar las ideas de regalo (" + reg.length + ", sin apartar)";
+      }).catch(function(){});
+  }
+  $('nueva-btn').addEventListener('click', abrirNueva);
+  $('n-base').addEventListener('change', llenarNueva);
+  $('n-cancelar').addEventListener('click', function(){ $('p-nueva').hidden = true; });
+  $('n-crear').addEventListener('click', function(){
+    var st = $('n-st'), d = {};
+    Object.keys(NF).forEach(function(k){ d[k] = $(NF[k]).value.trim(); });
+    d.edad = Math.max(1, parseInt(d.edad, 10) || 1);
+    var b = nBase || {};
+    d.tema = b.tema || 'dibujitos'; d.kicker = b.kicker || "¡Están invitados!"; d.recordatorio = b.recordatorio == null ? true : !!b.recordatorio; d.recordatorio_hora = b.recordatorio_hora || "10:30";
+    var bad = validate(d); if (bad) { setStatus(st, bad, true); return; }
+    if (fiestas.some(function(f){ return f.fecha === d.fecha && f.nombre === d.nombre; })) { setStatus(st, "Ya hay una fiesta de " + d.nombre + " en esa fecha.", true); return; }
+    var c = clean(d); delete c.foto;
+    var inv = (document.querySelector('input[name=n-inv]:checked') || {}).value || 'ninguno', act = $('n-actual').checked;
+    $('n-crear').disabled = true; setStatus(st, "Creando…");
+    sb.rpc('fiesta_nueva', { p_base: nBase ? nBase.id : null, p_datos: c, p_invitados: nBase ? inv : 'ninguno', p_regalos: !!nBase && $('n-reg').checked, p_actual: act }).then(chk)
+      .then(function(id){
+        $('n-crear').disabled = false; $('p-nueva').hidden = true; dirty = false; partyId = id; boot(); tab('fiesta');
+        setStatus($('top-st'), "Listo, creé la fiesta de " + c.nombre + " (" + I.fechaLarga(c.fecha).toLowerCase() + ")." + (act ? " Ya es la que ven los invitados." : " Los invitados siguen viendo la anterior hasta que toques \"Mostrar esta a los invitados\".") + " Revisa la foto y las tallas en Regalos.");
+      })
+      .catch(function(){ $('n-crear').disabled = false; setStatus(st, "No se pudo crear. Intenta de nuevo.", true); });
   });
+
+  /* ---------- historial de todas las fiestas ---------- */
+  var hist = null;
+  function cargarHist(){
+    setStatus($('h-st'), hist ? "" : "Cargando…");
+    Promise.all([
+      sb.from('fiestas').select('id,nombre,edad,fecha').order('fecha'),
+      sb.from('fiesta_invitados').select('id,fiesta_id,nombre,telefono'),
+      sb.from('fiesta_rsvps').select('fiesta_id,invitado_id,nombre,telefono,asiste,adultos,ninos,ninas'),
+      sb.from('fiesta_gastos').select('fiesta_id,total'),
+      sb.from('fiesta_pagos').select('fiesta_id,monto')
+    ]).then(function(r){ hist = { f: chk(r[0]), inv: chk(r[1]), rs: chk(r[2]), gas: chk(r[3]), pag: chk(r[4]) }; setStatus($('h-st'), ""); pintarHist(); })
+      .catch(function(){ setStatus($('h-st'), "No se pudo cargar el historial. Revisa tu internet.", true); });
+  }
+  function llaveFam(nombre, tel){ return tel ? 't' + tel : 'n' + String(nombre || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, ' ').trim(); }
+  function pintarHist(){
+    if (!hist) return;
+    var H = hist, fam = {};
+    var filas = H.f.map(function(f){
+      var inv = H.inv.filter(function(i){ return i.fiesta_id === f.id; }), rs = H.rs.filter(function(x){ return x.fiesta_id === f.id; }), si = rs.filter(function(x){ return x.asiste; });
+      var sinResp = inv.filter(function(i){ return !rs.some(function(x){ return x.invitado_id === i.id; }); }).length;
+      inv.forEach(function(i){ var r0 = rs.find(function(x){ return x.invitado_id === i.id; }), k = llaveFam(i.nombre, i.telefono); fam[k] = fam[k] || { nombre: i.nombre, p: {} }; fam[k].nombre = i.nombre; fam[k].p[f.id] = r0 ? (r0.asiste ? 'si' : 'no') : 'sr'; });
+      rs.forEach(function(x){ if (x.invitado_id) return; var k = llaveFam(x.nombre, x.telefono); fam[k] = fam[k] || { nombre: x.nombre, p: {} }; fam[k].p[f.id] = x.asiste ? 'si' : 'no'; });
+      var ad = si.reduce(function(s, x){ return s + (x.adultos || 0); }, 0), ni = si.reduce(function(s, x){ return s + (x.ninos || 0); }, 0);
+      var gt = H.gas.filter(function(g){ return g.fiesta_id === f.id; }).reduce(function(s, g){ return s + (+g.total || 0); }, 0);
+      var pg = H.pag.filter(function(p){ return p.fiesta_id === f.id; }).reduce(function(s, p){ return s + (+p.monto || 0); }, 0);
+      var pp = ad + ni;
+      return '<tr><td><b>' + esc(f.nombre) + ' · ' + esc(String(f.edad)) + ' ' + I.anos(f.edad) + '</b><br><span class="kd">' + esc(I.fechaLarga(f.fecha)) + '</span></td>' +
+        '<td class="n">' + inv.length + '</td><td class="n">' + si.length + '</td><td class="n">' + ad + '</td><td class="n">' + ni + '</td><td class="n">' + (rs.length - si.length) + '</td><td class="n">' + sinResp + '</td>' +
+        '<td class="n">' + dinero(gt) + (pg < gt ? '<br><span class="kd">Pagado ' + dinero(pg) + '</span>' : '') + (pp && gt ? '<br><span class="kd">' + dinero(gt / pp) + ' por persona</span>' : '') + '</td></tr>';
+    });
+    $('h-anios').innerHTML = H.f.length ? '<div class="tablewrap"><table><thead><tr><th>Fiesta</th><th class="n">Familias invitadas</th><th class="n">Familias que vinieron</th><th class="n">Adultos</th><th class="n">Niños y niñas</th><th class="n">No vinieron</th><th class="n">Sin respuesta</th><th class="n">Gasto</th></tr></thead><tbody>' + filas.reverse().join('') + '</tbody></table></div>' +
+      (H.f.length === 1 ? '<p class="note" style="text-align:left">Por ahora solo hay una fiesta. Cuando crees la del siguiente año, aquí podrás compararlas.</p>' : '') : '<p class="empty">Todavía no hay fiestas.</p>';
+    var q = $('h-buscar').value.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+    var lista = Object.keys(fam).map(function(k){ return fam[k]; }).filter(function(x){ return !q || x.nombre.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().indexOf(q) >= 0; });
+    var vino = function(x){ return H.f.filter(function(f){ return x.p[f.id] === 'si'; }).length; };
+    lista.sort(function(a, b){ return vino(b) - vino(a) || a.nombre.localeCompare(b.nombre, 'es'); });
+    var cols = H.f.slice().reverse();
+    var et = { si: '<span class="pill si">Vino</span>', no: '<span class="pill no">No vino</span>', sr: '<span style="color:var(--muted)">Sin respuesta</span>' };
+    $('h-fam').innerHTML = !lista.length ? '<p class="empty">' + (q ? 'No encontré esa familia.' : 'Todavía no hay familias.') + '</p>' :
+      '<div class="tablewrap"><table><thead><tr><th>Familia</th>' + cols.map(function(f){ return '<th>' + esc(String(f.fecha).slice(0, 4)) + ' · ' + esc(String(f.edad)) + ' ' + I.anos(f.edad) + '</th>'; }).join('') + '<th class="n">Veces que vino</th></tr></thead><tbody>' +
+      lista.map(function(x){ var inv = H.f.filter(function(f){ return x.p[f.id]; }).length;
+        return '<tr><td><b>' + esc(x.nombre) + '</b></td>' + cols.map(function(f){ return '<td>' + (et[x.p[f.id]] || '<span style="color:var(--muted)">No invitada</span>') + '</td>'; }).join('') + '<td class="n">' + vino(x) + ' de ' + inv + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  }
+  $('h-buscar').addEventListener('input', pintarHist);
 })();
